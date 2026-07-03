@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import DemoLearnTab from './DemoLearnTab'
 
 type Member = { name: string; firstName: string; personalityLabel: string; moodTendency: string; avatarInitials: string; avatarBg: string; avatarText: string; role: string; seniority: string }
 type Ticket = { id: string; ticket_id: string; title: string; status: 'todo'|'in_progress'|'done'; assignee_name: string|null; story_points: number; is_blocked: boolean }
@@ -22,6 +23,7 @@ const GRADE_LABELS: Record<string, string> = { strong: 'Strong', satisfactory: '
 const NAV = [
   { key: 'dashboard',   icon: '⊞', label: 'Dashboard'       },
   { key: 'activity',    icon: '✦', label: 'Weekly activity'  },
+  { key: 'learn',       icon: '◎', label: 'Learn'            },
   { key: 'team',        icon: '⚇', label: 'My team'          },
   { key: 'board',       icon: '☰', label: 'Sprint board'     },
   { key: 'gantt',       icon: '▤', label: 'Gantt chart'      },
@@ -597,6 +599,9 @@ export default function DemoStudentTabs({ team, tickets, week, scenario, pastSub
               </div>
             </div>
           )}
+
+          {/* ── LEARN ── */}
+          {tab === 'learn' && <DemoLearnTab />}
 
           {/* ── SUBMISSIONS ── */}
           {tab === 'submissions' && (
