@@ -1,0 +1,11 @@
+// Demo mode — auth middleware disabled until Supabase is configured.
+// Restore the full version from SETUP.md once your DB is connected.
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function middleware(_request: NextRequest) {
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/auth).*)'],
+}
