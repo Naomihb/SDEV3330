@@ -8,15 +8,15 @@ const TEAM = [
   { name: 'Hoftin Hasselhof',firstName:'Hoftin', lastName: 'Hasselhof', role: 'qa_lead',    seniority: 'mid',    personalityLabel: 'Detail-obsessed',           moodTendency: 'positive', avatarInitials: 'HH', avatarBg: 'bg-blue-100',   avatarText: 'text-blue-800' },
 ]
 
-const TICKETS = [
-  { id: 't1', ticket_id: 'PAW-01', title: 'Scaffold project repo',         status: 'done',        assignee_name: 'Isla Princess',   story_points: 2, is_blocked: false },
+const TICKETS: { id: string; ticket_id: string; title: string; status: 'todo'|'in_progress'|'done'; assignee_name: string; story_points: number; is_blocked: boolean }[] = [
+  { id: 't1', ticket_id: 'PAW-01', title: 'Scaffold project repo',          status: 'done',        assignee_name: 'Isla Princess',   story_points: 2, is_blocked: false },
   { id: 't2', ticket_id: 'PAW-02', title: 'Define initial user stories',    status: 'done',        assignee_name: 'Isla Princess',   story_points: 3, is_blocked: false },
   { id: 't3', ticket_id: 'PAW-03', title: 'Build pet profile component',    status: 'in_progress', assignee_name: 'Isla Princess',   story_points: 5, is_blocked: false },
   { id: 't4', ticket_id: 'PAW-04', title: 'Set up auth endpoints',          status: 'in_progress', assignee_name: 'Pippin Squeak',   story_points: 5, is_blocked: true  },
   { id: 't5', ticket_id: 'PAW-05', title: 'Design onboarding flow',         status: 'todo',        assignee_name: 'Mia Peachy',      story_points: 3, is_blocked: false },
-  { id: 't6', ticket_id: 'PAW-06', title: 'Write unit tests for pet profile',status:'todo',        assignee_name: 'Hoftin Hasselhof', story_points: 2, is_blocked: false },
+  { id: 't6', ticket_id: 'PAW-06', title: 'Write unit tests for pet profile',status: 'todo',       assignee_name: 'Hoftin Hasselhof', story_points: 2, is_blocked: false },
   { id: 't7', ticket_id: 'PAW-07', title: 'Vet appointment booking UI',     status: 'todo',        assignee_name: 'Mia Peachy',      story_points: 3, is_blocked: false },
-  { id: 't8', ticket_id: 'PAW-08', title: 'QA review sprint 1 deliverables',status:'todo',        assignee_name: 'Hoftin Hasselhof', story_points: 2, is_blocked: false },
+  { id: 't8', ticket_id: 'PAW-08', title: 'QA review sprint 1 deliverables',status: 'todo',       assignee_name: 'Hoftin Hasselhof', story_points: 2, is_blocked: false },
 ]
 
 const WEEK = { id: 'w5', week_number: 5, topic: 'Scrum Framework', description: 'Run your first sprint planning session and handle your first team conflict.', due_date: '2026-02-23', is_active: true }
