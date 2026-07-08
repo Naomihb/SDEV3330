@@ -189,7 +189,7 @@ create table public.feedback (
   id             uuid primary key default uuid_generate_v4(),
   submission_id  uuid not null references public.submissions(id) on delete cascade,
   instructor_id  uuid not null references public.profiles(id),
-  grade          text not null check (grade in ('strong','satisfactory','needs_revision')),
+  grade          text not null check (grade in ('S','U','E','I')),
   feedback_text  text,
   submitted_at   timestamptz default now()
 );
