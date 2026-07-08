@@ -1,9 +1,14 @@
-// DEMO STUB — replace with the real implementation from SETUP.md when connecting Supabase
-// import { createBrowserClient } from '@supabase/ssr'
-// export function createClient() {
-//   return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-// }
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+// Browser-side Supabase client (singleton)
+let _client: ReturnType<typeof createSupabaseClient> | null = null
 
 export function createClient() {
-  throw new Error('Supabase not configured — use /demo routes for preview')
+  if (!_client) {
+    _client = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }
+  return _client
 }

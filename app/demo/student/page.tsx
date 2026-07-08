@@ -19,7 +19,7 @@ const TICKETS: { id: string; ticket_id: string; title: string; status: 'todo'|'i
   { id: 't8', ticket_id: 'PAW-08', title: 'QA review sprint 1 deliverables',status: 'todo',       assignee_name: 'Hoftin Hasselhof', story_points: 2, is_blocked: false },
 ]
 
-const WEEK = { id: 'w5', week_number: 5, topic: 'Scrum Framework', description: 'Run your first sprint planning session and handle your first team conflict.', due_date: '2026-02-23', is_active: true }
+const WEEK = { id: 'w5', week_number: 5, topic: 'Scrum Framework', description: 'Run sprint planning. Handle your first team conflict around story point estimates.', due_date: '2026-09-23', is_active: true }
 
 const SCENARIO = `During sprint planning, Pippin Squeak estimated the auth ticket at 8 story points — almost the entire sprint capacity. Isla Princess pushed back immediately, saying she's seen the same task done in 2 points at her last job. Mia Peachy has gone quiet, and Hoftin Hasselhof is waiting to hear your call as Scrum Master before estimating the QA work that depends on it.`
 

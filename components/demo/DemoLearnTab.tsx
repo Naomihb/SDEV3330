@@ -2,28 +2,91 @@
 
 import { useState } from 'react'
 
-// ── Week 5 lesson content ─────────────────────────────────────────────────────
+// ── Lessons by week ───────────────────────────────────────────────────────────
 
-const LESSON = {
-  week: 5,
-  topic: 'Scrum Framework',
-  intro: `Scrum is a lightweight framework for developing and sustaining complex products. It doesn't prescribe specific techniques — instead it gives you a structure of roles, events, and artifacts, then lets the team decide how to work within them. This week you're running your first sprint planning session, which means you need to understand what Scrum actually requires of you as Scrum Master.`,
-  sections: [
-    {
-      id: 'team',
-      title: 'The Scrum Team',
-      summary: 'A Scrum Team has exactly three accountabilities: Product Owner, Scrum Master, and Developers. No sub-teams, no hierarchy — one cohesive unit of 10 or fewer people.',
-      deep: `The Product Owner is accountable for maximizing the value of the product. They own the Product Backlog — ordering it, keeping it transparent, and making sure Developers understand what's in it. The PO is one person, not a committee.
+const LESSONS: Record<number, {
+  week: number; topic: string; intro: string; hasScenario: boolean;
+  sections: { id: string; title: string; summary: string; deep: string }[]
+}> = {
+  1: {
+    week: 1, topic: 'Welcome to SprintSim', hasScenario: false,
+    intro: `This semester you're not just learning about software teams — you're leading one. SprintSim puts you in the role of Scrum Master on a fictional software project with four NPC teammates. Every week you'll get a scenario tied to what we're covering in class, and you'll respond in writing as the team lead. No right answers, no multiple choice — just you making judgment calls and explaining your reasoning.`,
+    sections: [
+      {
+        id: 'role',
+        title: 'Your role: Scrum Master',
+        summary: 'A Scrum Master is a team leader who doesn\'t manage people — they remove obstacles, keep the team focused, and make sure everyone can do their best work. Think coach, not boss.',
+        deep: `In real software teams, the Scrum Master is the person who makes sure the team can work without friction. They don't assign tasks or approve code. They ask questions like: "What's blocking you?" and "How can I help?" and "What's slowing us down?"
+
+You don't need to know Scrum deeply yet — we'll get there in Week 5. For now, just know: your job is to help your team succeed, not to make all the decisions yourself. The best Scrum Masters lead by asking good questions and creating conditions where the team can self-organize.
+
+In SprintSim, your four teammates have different personalities and different ways of reacting to problems. Part of your job is understanding how each person works and responding to them accordingly.`,
+      },
+      {
+        id: 'team',
+        title: 'Your team',
+        summary: 'You\'ve been assigned four NPC teammates: Isla Princess, Pippin Squeak, Mia Peachy, and Hoftin Hasselhof. Each has a unique role, seniority level, and personality — these stay fixed for the whole semester.',
+        deep: `Your team members are randomized — every student in the class gets the same four names but different role assignments, seniority levels, and personality traits. So the Isla Princess on your team might be a confident senior developer, while a classmate's Isla might be an anxious junior.
+
+Pay attention to your teammates' moods and tendencies. A team member who "goes quiet under stress" needs a different response than one who is "opinionated and pushes back." There's no wrong way to handle a situation — but the best responses show you understand your specific team's dynamics, not just the textbook answer.
+
+Check the Team tab to see your teammates' full profiles. You'll be managing these exact four people for the next 12 weeks.`,
+      },
+      {
+        id: 'words',
+        title: '8 words you\'ll see every week',
+        summary: 'You don\'t need to memorize these — you\'ll learn them naturally. But here\'s a quick cheat sheet so nothing on the platform surprises you.',
+        deep: `Sprint — a fixed period of work (a few weeks). Think of it as one round of the game.
+
+Ticket — a unit of work. "Build the login screen" is a ticket. Your sprint board shows all your tickets.
+
+Story Points — a rough estimate of how hard a ticket is. 1 = trivial, 8 = hard. Not hours.
+
+Backlog — the list of all tickets not yet started. The pile of work waiting to be done.
+
+Standup — a short daily check-in (15 min max). What did you do? What are you doing? Blocked on anything?
+
+Blocked — a ticket is blocked when something outside the team's control is stopping it from moving forward.
+
+Velocity — how many story points the team finishes per sprint. Useful for predicting future capacity.
+
+Retrospective (Retro) — a meeting at the end of each sprint where the team reflects on what went well and what to change.
+
+You don't need to use these terms in your responses. Write naturally — what matters is your reasoning, not your vocabulary.`,
+      },
+      {
+        id: 'howit',
+        title: 'How SprintSim works',
+        summary: 'Each week: read the scenario, write your response as Scrum Master, submit before class on Wednesday. Your instructor reviews and leaves feedback. That\'s it.',
+        deep: `Each week you\'ll see a scenario under "Weekly activity." It\'s a 3–4 sentence situation involving your team members and your project. Something went wrong, someone is disagreeing, or a decision needs to be made.
+
+Your response should be 150–300 words. Explain what you'd do, why, and how you'd communicate it to your team. There's no lookup answer — your instructor is evaluating your reasoning, not whether you matched a rubric.
+
+Grades are: Strong, Satisfactory, or Needs Revision. Feedback is written by your instructor after each submission. You can see all your past submissions and feedback in the Submissions tab.
+
+No submission is due this week — just explore the platform, check out your team in the Team tab, and look at your project in the Sprint Board. We start for real next Wednesday.`,
+      },
+    ],
+  },
+  5: {
+    week: 5, topic: 'Scrum Framework', hasScenario: true,
+    intro: `Scrum is a lightweight framework for developing and sustaining complex products. It doesn't prescribe specific techniques — instead it gives you a structure of roles, events, and artifacts, then lets the team decide how to work within them. This week you're running your first sprint planning session, which means you need to understand what Scrum actually requires of you as Scrum Master.`,
+    sections: [
+      {
+        id: 'team',
+        title: 'The Scrum Team',
+        summary: 'A Scrum Team has exactly three accountabilities: Product Owner, Scrum Master, and Developers. No sub-teams, no hierarchy — one cohesive unit of 10 or fewer people.',
+        deep: `The Product Owner is accountable for maximizing the value of the product. They own the Product Backlog — ordering it, keeping it transparent, and making sure Developers understand what's in it. The PO is one person, not a committee.
 
 The Scrum Master serves the team and the organization. They coach the team on Scrum, remove impediments, and facilitate events. Crucially, the Scrum Master has no authority over Developers — they lead by influence, not by command. That's the role you play in SprintSim.
 
 Developers are the people doing the work. In Scrum, "Developer" means anyone who contributes to creating the Increment — designers, testers, engineers, everyone. They're self-managing: they decide internally how to do the work, not the Scrum Master.`,
-    },
-    {
-      id: 'events',
-      title: 'The Five Scrum Events',
-      summary: 'Sprint, Sprint Planning, Daily Scrum, Sprint Review, and Sprint Retrospective. Each event has a fixed maximum duration (a time-box) and a specific purpose.',
-      deep: `The Sprint is the container for all other events — a fixed period of one month or less during which a "Done" Increment is created. Sprints give the team a heartbeat: a consistent cadence for planning, execution, and reflection.
+      },
+      {
+        id: 'events',
+        title: 'The Five Scrum Events',
+        summary: 'Sprint, Sprint Planning, Daily Scrum, Sprint Review, and Sprint Retrospective. Each event has a fixed maximum duration (a time-box) and a specific purpose.',
+        deep: `The Sprint is the container for all other events — a fixed period of one month or less during which a "Done" Increment is created. Sprints give the team a heartbeat: a consistent cadence for planning, execution, and reflection.
 
 Sprint Planning kicks off the Sprint. The team answers two questions: (1) Why is this Sprint valuable? (2) What can be Done this Sprint? The Developers select items from the Product Backlog and create a Sprint Goal. Time-box: 8 hours for a 1-month Sprint (proportionally less for shorter Sprints).
 
@@ -32,32 +95,33 @@ The Daily Scrum is a 15-minute event for Developers to inspect progress toward t
 The Sprint Review happens at the end of the Sprint. The team presents the Increment to stakeholders, gets feedback, and the Product Backlog is adapted. Time-box: 4 hours for a 1-month Sprint.
 
 The Sprint Retrospective closes the Sprint. The team inspects how the last Sprint went — people, relationships, process, tools — and identifies improvements to carry forward. Time-box: 3 hours for a 1-month Sprint.`,
-    },
-    {
-      id: 'artifacts',
-      title: 'Scrum Artifacts',
-      summary: 'Three artifacts: Product Backlog (what needs to be done), Sprint Backlog (what the team committed to this Sprint), and the Increment (what was actually built). Each has a "commitment" that makes progress measurable.',
-      deep: `The Product Backlog is an ordered list of everything that might be needed in the product. The Product Owner owns it. Items at the top are more refined and ready to work; items farther down are larger and less detailed. The commitment for the Product Backlog is the Product Goal — the long-term objective the team is working toward.
+      },
+      {
+        id: 'artifacts',
+        title: 'Scrum Artifacts',
+        summary: 'Three artifacts: Product Backlog (what needs to be done), Sprint Backlog (what the team committed to this Sprint), and the Increment (what was actually built). Each has a "commitment" that makes progress measurable.',
+        deep: `The Product Backlog is an ordered list of everything that might be needed in the product. The Product Owner owns it. Items at the top are more refined and ready to work; items farther down are larger and less detailed. The commitment for the Product Backlog is the Product Goal.
 
-The Sprint Backlog is the plan for the Sprint: the Sprint Goal (why), the set of Product Backlog items selected (what), and the plan for delivering the Increment (how). It's owned by Developers and updated throughout the Sprint. The commitment is the Sprint Goal.
+The Sprint Backlog is the plan for the Sprint: the Sprint Goal (why), the set of Product Backlog items selected (what), and the plan for delivering the Increment (how). Owned by Developers and updated throughout the Sprint.
 
-The Increment is the sum of all completed Product Backlog items plus the value of previous Increments. An Increment must be usable — it must meet the Definition of Done. The commitment for the Increment is the Definition of Done (DoD).
+The Increment is the sum of all completed Product Backlog items. It must be usable and meet the Definition of Done.
 
 The Definition of Done is a shared understanding of what "Done" means. If an item doesn't meet the DoD, it can't be included in the Increment. Teams that skip defining their DoD almost always argue about whether work is really done.`,
-    },
-    {
-      id: 'estimation',
-      title: 'Estimation & Velocity',
-      summary: 'Story points measure relative effort, not hours. Velocity is how many points a team completes per Sprint on average — it\'s a planning tool, not a performance metric.',
-      deep: `Story points are a unit of measure for the size of a backlog item relative to other items. A 5-point story isn't five times harder than a 1-point story — it's roughly five times the effort, uncertainty, and complexity of a 1-point story. The absolute values don't matter; the ratios do.
+      },
+      {
+        id: 'estimation',
+        title: 'Estimation & Velocity',
+        summary: 'Story points measure relative effort, not hours. Velocity is how many points a team completes per Sprint on average — a planning tool, not a performance metric.',
+        deep: `Story points are a unit of measure for the size of a backlog item relative to other items. A 5-point story isn't five times harder than a 1-point story — it's roughly five times the effort, uncertainty, and complexity. The absolute values don't matter; the ratios do.
 
-Planning Poker is a common estimation technique: each team member privately picks a card representing their estimate, then everyone reveals simultaneously. Divergence triggers a discussion. This prevents anchoring (where the first person to speak influences everyone else) and surfaces different assumptions about scope.
+Planning Poker prevents anchoring: each team member privately picks a card, then everyone reveals simultaneously. Divergence triggers discussion and surfaces hidden assumptions about scope.
 
-Velocity is the average number of story points a team completes per Sprint over several Sprints. It's used to forecast how much work the team can take on. A team with a 30-point velocity shouldn't plan a 60-point Sprint. Importantly, velocity is a team-level measurement — comparing velocity between teams tells you nothing useful and creates bad incentives.
+Velocity is the average story points completed per Sprint. A team with 30-point velocity shouldn't plan a 60-point Sprint. Never compare velocity between teams — it creates bad incentives.
 
-In your PawTrack sprint, Pippin estimated PAW-04 at 8 points. Isla says she's seen it done in 2. Neither is automatically right — their estimates reflect different assumptions about scope, dependencies, and risk. Your job as Scrum Master is to facilitate a discussion that surfaces those assumptions, not to pick a number yourself.`,
-    },
-  ],
+In your scenario this week, Pippin estimated a ticket at 8 points and Isla says she's done it in 2. Neither is automatically right — their estimates reflect different assumptions about scope and risk. Your job as Scrum Master is to surface those assumptions, not pick a number.`,
+      },
+    ],
+  },
 }
 
 // ── Glossary ──────────────────────────────────────────────────────────────────
@@ -138,7 +202,8 @@ const FLASHCARDS = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function DemoLearnTab() {
+export default function DemoLearnTab({ weekNumber = 5 }: { weekNumber?: number }) {
+  const lesson = LESSONS[weekNumber] ?? LESSONS[5]
   const [view, setView] = useState<'lesson' | 'glossary' | 'flashcards'>('lesson')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [glossarySearch, setGlossarySearch] = useState('')
@@ -162,8 +227,8 @@ export default function DemoLearnTab() {
       {/* Header */}
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5">Week 5</span>
-          <span className="text-xs text-gray-400">Scrum Framework</span>
+          <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5">Week {lesson.week}</span>
+          <span className="text-xs text-gray-400">{lesson.topic}</span>
         </div>
         <h1 className="text-xl font-semibold text-gray-900">Learn</h1>
         <p className="text-sm text-gray-400 mt-0.5">Lesson notes, glossary, and flashcards for this week</p>
@@ -189,11 +254,11 @@ export default function DemoLearnTab() {
         <div className="space-y-4">
           {/* Intro */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-5">
-            <p className="text-sm text-indigo-900 leading-relaxed">{LESSON.intro}</p>
+            <p className="text-sm text-indigo-900 leading-relaxed">{lesson.intro}</p>
           </div>
 
           {/* Sections */}
-          {LESSON.sections.map(section => (
+          {lesson.sections.map(section => (
             <div key={section.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
               <div className="p-5">
                 <div className="flex items-start justify-between gap-3">

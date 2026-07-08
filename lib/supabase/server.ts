@@ -1,12 +1,21 @@
-// DEMO STUB — replace with the real implementation from SETUP.md when connecting Supabase
-// import { createServerClient } from '@supabase/ssr'
-// import { cookies } from 'next/headers'
-// ... (see SETUP.md for full implementation)
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-export async function createClient() {
-  throw new Error('Supabase not configured — use /demo routes for preview')
+// Server-side client — uses anon key, relies on RLS
+// Pass the user's JWT from the Authorization header to scope queries correctly
+export function createClient(accessToken?: string) {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    accessToken
+      ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } }
+      : {}
+  )
 }
 
-export async function createServiceClient() {
-  throw new Error('Supabase not configured — use /demo routes for preview')
+// Service-role client — bypasses RLS, for trusted server operations only
+export function createServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 }

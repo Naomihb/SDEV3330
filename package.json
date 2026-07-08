@@ -12,6 +12,8 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@supabase/supabase-js": "^2.50.0",
     "clsx": "^2.1.1",
     "next": "14.2.15",
     "react": "^18",

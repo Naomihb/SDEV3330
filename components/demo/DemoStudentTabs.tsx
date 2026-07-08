@@ -601,7 +601,7 @@ export default function DemoStudentTabs({ team, tickets, week, scenario, pastSub
           )}
 
           {/* ── LEARN ── */}
-          {tab === 'learn' && <DemoLearnTab />}
+          {tab === 'learn' && <DemoLearnTab weekNumber={week.week_number} />}
 
           {/* ── SUBMISSIONS ── */}
           {tab === 'submissions' && (
