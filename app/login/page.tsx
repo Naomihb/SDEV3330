@@ -1,3 +1,96 @@
-import { redirect } from 'next/navigation'
-// DEMO STUB — restore real implementation from SETUP.md when Supabase is connected.
-export default function LoginPage() { redirect('/demo') }
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+
+export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const supabase = createClient()
+
+    if (mode === 'signup') {
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) { setError(error.message); setLoading(false); return }
+      setError('Check your email to confirm your account, then log in.')
+      setMode('login')
+      setLoading(false)
+      return
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) { setError(error.message); setLoading(false); return }
+
+    // Route by role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+
+    router.push(profile?.role === 'instructor' ? '/instructor/dashboard' : '/student/dashboard')
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">SprintSim</h1>
+          <p className="text-sm text-gray-400 mt-1">CS 3330 · Fall 2026</p>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1">
+            {(['login', 'signup'] as const).map(m => (
+              <button key={m} onClick={() => { setMode(m); setError('') }}
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${
+                  mode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}>
+                {m === 'login' ? 'Log in' : 'Sign up'}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@collin.edu"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
+              <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300" />
+            </div>
+
+            {error && (
+              <p className={`text-xs px-3 py-2 rounded-lg ${
+                error.startsWith('Check') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+              }`}>{error}</p>
+            )}
+
+            <button type="submit" disabled={loading}
+              className="w-full bg-indigo-600 text-white text-sm font-medium rounded-lg py-2.5 hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+              {loading ? 'Loading…' : mode === 'login' ? 'Log in' : 'Create account'}
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
+          <a href="/demo/student" className="text-indigo-500 hover:underline">Preview demo without logging in →</a>
+        </p>
+      </div>
+    </div>
+  )
+}

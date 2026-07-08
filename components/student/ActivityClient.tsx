@@ -1,2 +1,110 @@
-// DEMO STUB
-export default function ActivityClient() { return null }
+'use client'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+
+export default function ActivityClient({ week }: { week: any }) {
+  const [scenario, setScenario] = useState<string | null>(null)
+  const [submission, setSubmission] = useState<any>(null)
+  const [response, setResponse] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user, session } } = await supabase.auth.getSession()
+      if (!user || !session) return
+
+      // Check for existing scenario
+      const { data: existing } = await supabase
+        .from('scenarios').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
+
+      if (existing) {
+        setScenario(existing.content)
+        // Check for existing submission
+        const { data: sub } = await supabase
+          .from('submissions').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
+        if (sub) { setSubmission(sub); setResponse(sub.response_text) }
+        setLoading(false)
+        return
+      }
+
+      // Generate new scenario
+      setGenerating(true)
+      const res = await fetch('/api/scenarios/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ weekId: week.id }),
+      })
+      const data = await res.json()
+      setScenario(data.content ?? data.error)
+      setGenerating(false)
+      setLoading(false)
+    }
+    load()
+  }, [week.id])
+
+  async function handleSubmit() {
+    setSubmitting(true)
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+
+    const { data: scenarioRow } = await supabase
+      .from('scenarios').select('id').eq('week_id', week.id).single()
+
+    const res = await fetch('/api/submissions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ weekId: week.id, scenarioId: scenarioRow?.id, responseText: response }),
+    })
+    const data = await res.json()
+    setSubmission(data)
+    setSubmitting(false)
+  }
+
+  if (loading || generating) return (
+    <div className="flex items-center gap-3 py-12">
+      <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+      <p className="text-sm text-gray-400">{generating ? 'Generating your scenario…' : 'Loading…'}</p>
+    </div>
+  )
+
+  return (
+    <div className="max-w-3xl space-y-4">
+      <div className="bg-white border border-gray-200 rounded-xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-900">This week&apos;s scenario</h2>
+          <span className="text-xs text-indigo-500 bg-indigo-50 rounded px-2 py-0.5">AI-generated for your team</span>
+        </div>
+        <p className="text-sm text-gray-700 leading-relaxed">{scenario}</p>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-5">
+        <h2 className="text-sm font-semibold text-gray-900 mb-1">Your response</h2>
+        <p className="text-xs text-gray-400 mb-3">Write as the Scrum Master. Explain your reasoning.</p>
+        {submission ? (
+          <div>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap mb-3">{response}</div>
+            <p className="text-sm text-green-600">✓ Submitted · awaiting instructor review</p>
+            <button onClick={() => setSubmission(null)} className="mt-2 text-xs text-indigo-500 hover:underline">Edit response</button>
+          </div>
+        ) : (
+          <>
+            <textarea value={response} onChange={e => setResponse(e.target.value)} rows={7}
+              placeholder="As Scrum Master, I would…"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder-gray-300" />
+            <div className="flex items-center justify-between mt-3">
+              <span className="text-xs text-gray-300">{response.length} chars</span>
+              <button onClick={handleSubmit} disabled={!response.trim() || submitting}
+                className="bg-indigo-600 text-white text-sm rounded-lg px-4 py-2 hover:bg-indigo-700 disabled:opacity-40 transition-colors">
+                {submitting ? 'Submitting…' : 'Submit response'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
