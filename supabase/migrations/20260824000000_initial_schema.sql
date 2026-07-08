@@ -1,51 +1,27 @@
--- SprintSim Database Schema
--- Run this in your Supabase SQL editor
-
--- Enable UUID extension
+-- SprintSim full schema — runs via `supabase db reset`
 create extension if not exists "uuid-ossp";
 
--- ─── USERS ───────────────────────────────────────────────────────────────────
--- Extends Supabase auth.users
-create table public.profiles (
-  id          uuid primary key references auth.users(id) on delete cascade,
-  email       text not null,
-  full_name   text not null,
-  role        text not null check (role in ('student', 'instructor')),
-  created_at  timestamptz default now()
+-- profiles (extends auth.users)
+create table if not exists public.profiles (
+  id         uuid primary key references auth.users(id) on delete cascade,
+  email      text not null,
+  full_name  text not null default '',
+  role       text not null default 'student' check (role in ('student','instructor')),
+  created_at timestamptz default now()
 );
 
-alter table public.profiles enable row level security;
-
-create policy "Users can view own profile"
-  on public.profiles for select using (auth.uid() = id);
-
-create policy "Users can update own profile"
-  on public.profiles for update using (auth.uid() = id);
-
-create policy "Instructors can view all profiles"
-  on public.profiles for select
-  using (exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'instructor'
-  ));
-
--- ─── COURSES ─────────────────────────────────────────────────────────────────
-create table public.courses (
-  id              uuid primary key default uuid_generate_v4(),
-  code            text not null,           -- e.g. "CS 3330"
-  name            text not null,           -- e.g. "Software Dev Processes"
-  semester        text not null,           -- e.g. "Spring 2026"
-  instructor_id   uuid references public.profiles(id) on delete set null,
-  created_at      timestamptz default now()
+-- courses
+create table if not exists public.courses (
+  id            uuid primary key default uuid_generate_v4(),
+  code          text not null,
+  name          text not null,
+  semester      text not null,
+  instructor_id uuid references public.profiles(id) on delete set null,
+  created_at    timestamptz default now()
 );
 
-alter table public.courses enable row level security;
-
-create policy "Anyone enrolled can view course"
-  on public.courses for select using (true);
-
--- ─── WEEKS ───────────────────────────────────────────────────────────────────
-create table public.weeks (
+-- weeks
+create table if not exists public.weeks (
   id           uuid primary key default uuid_generate_v4(),
   course_id    uuid not null references public.courses(id) on delete cascade,
   week_number  int not null,
@@ -53,17 +29,13 @@ create table public.weeks (
   description  text,
   due_date     date,
   is_active    boolean default false,
+  prior_topics text[] default '{}',
   created_at   timestamptz default now(),
   unique(course_id, week_number)
 );
 
-alter table public.weeks enable row level security;
-
-create policy "Anyone can view weeks"
-  on public.weeks for select using (true);
-
--- ─── ENROLLMENTS ─────────────────────────────────────────────────────────────
-create table public.enrollments (
+-- enrollments
+create table if not exists public.enrollments (
   id          uuid primary key default uuid_generate_v4(),
   student_id  uuid not null references public.profiles(id) on delete cascade,
   course_id   uuid not null references public.courses(id) on delete cascade,
@@ -71,52 +43,25 @@ create table public.enrollments (
   unique(student_id, course_id)
 );
 
-alter table public.enrollments enable row level security;
-
-create policy "Students can view own enrollment"
-  on public.enrollments for select using (auth.uid() = student_id);
-
-create policy "Instructors can view all enrollments"
-  on public.enrollments for select
-  using (exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'instructor'
-  ));
-
--- ─── TEAM ASSIGNMENTS ────────────────────────────────────────────────────────
--- Stores each student's randomized team + project for a course
-create table public.team_assignments (
+-- team_assignments
+create table if not exists public.team_assignments (
   id                  uuid primary key default uuid_generate_v4(),
   student_id          uuid not null references public.profiles(id) on delete cascade,
   course_id           uuid not null references public.courses(id) on delete cascade,
   project_name        text not null,
   project_description text not null,
-  -- JSON array of 4 team members with randomized traits
-  -- [{ name, nickname, role, seniority, personality, mood_tendency, avatar_initials, color }]
   team_config         jsonb not null,
   created_at          timestamptz default now(),
   unique(student_id, course_id)
 );
 
-alter table public.team_assignments enable row level security;
-
-create policy "Students can view own team"
-  on public.team_assignments for select using (auth.uid() = student_id);
-
-create policy "Instructors can view all teams"
-  on public.team_assignments for select
-  using (exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'instructor'
-  ));
-
--- ─── SPRINT TICKETS ──────────────────────────────────────────────────────────
-create table public.sprint_tickets (
+-- sprint_tickets
+create table if not exists public.sprint_tickets (
   id            uuid primary key default uuid_generate_v4(),
   student_id    uuid not null references public.profiles(id) on delete cascade,
   course_id     uuid not null references public.courses(id) on delete cascade,
   sprint_number int not null default 1,
-  ticket_id     text not null,             -- e.g. "PAW-04"
+  ticket_id     text not null,
   title         text not null,
   status        text not null default 'todo' check (status in ('todo','in_progress','done')),
   assignee_name text,
@@ -125,21 +70,8 @@ create table public.sprint_tickets (
   created_at    timestamptz default now()
 );
 
-alter table public.sprint_tickets enable row level security;
-
-create policy "Students can manage own tickets"
-  on public.sprint_tickets for all using (auth.uid() = student_id);
-
-create policy "Instructors can view all tickets"
-  on public.sprint_tickets for select
-  using (exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'instructor'
-  ));
-
--- ─── SCENARIOS ───────────────────────────────────────────────────────────────
--- AI-generated weekly scenario, unique per student per week
-create table public.scenarios (
+-- scenarios
+create table if not exists public.scenarios (
   id           uuid primary key default uuid_generate_v4(),
   student_id   uuid not null references public.profiles(id) on delete cascade,
   week_id      uuid not null references public.weeks(id) on delete cascade,
@@ -148,20 +80,8 @@ create table public.scenarios (
   unique(student_id, week_id)
 );
 
-alter table public.scenarios enable row level security;
-
-create policy "Students can view own scenarios"
-  on public.scenarios for select using (auth.uid() = student_id);
-
-create policy "Instructors can view all scenarios"
-  on public.scenarios for select
-  using (exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'instructor'
-  ));
-
--- ─── SUBMISSIONS ─────────────────────────────────────────────────────────────
-create table public.submissions (
+-- submissions
+create table if not exists public.submissions (
   id            uuid primary key default uuid_generate_v4(),
   student_id    uuid not null references public.profiles(id) on delete cascade,
   week_id       uuid not null references public.weeks(id) on delete cascade,
@@ -172,49 +92,87 @@ create table public.submissions (
   unique(student_id, week_id)
 );
 
-alter table public.submissions enable row level security;
-
-create policy "Students can manage own submissions"
-  on public.submissions for all using (auth.uid() = student_id);
-
-create policy "Instructors can view all submissions"
-  on public.submissions for select
-  using (exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'instructor'
-  ));
-
--- ─── FEEDBACK ────────────────────────────────────────────────────────────────
-create table public.feedback (
-  id             uuid primary key default uuid_generate_v4(),
-  submission_id  uuid not null references public.submissions(id) on delete cascade,
-  instructor_id  uuid not null references public.profiles(id),
-  grade          text not null check (grade in ('strong','satisfactory','needs_revision')),
-  feedback_text  text,
-  submitted_at   timestamptz default now()
+-- feedback
+create table if not exists public.feedback (
+  id            uuid primary key default uuid_generate_v4(),
+  submission_id uuid not null references public.submissions(id) on delete cascade,
+  instructor_id uuid not null references public.profiles(id),
+  grade         text not null check (grade in ('S','U','E','I')),
+  feedback_text text,
+  submitted_at  timestamptz default now(),
+  unique(submission_id)
 );
 
-alter table public.feedback enable row level security;
+-- ── RLS ──────────────────────────────────────────────────────────────────────
+alter table public.profiles         enable row level security;
+alter table public.courses          enable row level security;
+alter table public.weeks            enable row level security;
+alter table public.enrollments      enable row level security;
+alter table public.team_assignments enable row level security;
+alter table public.sprint_tickets   enable row level security;
+alter table public.scenarios        enable row level security;
+alter table public.submissions      enable row level security;
+alter table public.feedback         enable row level security;
 
-create policy "Instructors can manage feedback"
+create policy "own profile select"   on public.profiles for select using (auth.uid() = id);
+create policy "own profile update"   on public.profiles for update using (auth.uid() = id);
+create policy "instructor see all profiles"
+  on public.profiles for select
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+
+create policy "courses public select" on public.courses for select using (true);
+create policy "instructor manage courses" on public.courses for all
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+
+create policy "weeks public select" on public.weeks for select using (true);
+create policy "instructor manage weeks" on public.weeks for all
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+
+create policy "own enrollment"         on public.enrollments for select using (auth.uid() = student_id);
+create policy "own team"               on public.team_assignments for select using (auth.uid() = student_id);
+create policy "manage own tickets"     on public.sprint_tickets for all using (auth.uid() = student_id);
+create policy "own scenarios"          on public.scenarios for select using (auth.uid() = student_id);
+create policy "manage own submissions" on public.submissions for all using (auth.uid() = student_id);
+
+create policy "instructor see enrollments"
+  on public.enrollments for select
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+create policy "instructor see teams"
+  on public.team_assignments for select
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+create policy "instructor see tickets"
+  on public.sprint_tickets for select
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+create policy "instructor see scenarios"
+  on public.scenarios for select
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+create policy "instructor see submissions"
+  on public.submissions for select
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+create policy "instructor manage feedback"
   on public.feedback for all
-  using (exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'instructor'
-  ));
-
-create policy "Students can view feedback on own submissions"
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'instructor'));
+create policy "student see own feedback"
   on public.feedback for select
-  using (exists (
-    select 1 from public.submissions s
-    where s.id = submission_id and s.student_id = auth.uid()
-  ));
+  using (exists (select 1 from public.submissions s where s.id = submission_id and s.student_id = auth.uid()));
 
--- ─── SEED: CS 3330 COURSE + WEEKS ────────────────────────────────────────────
--- Run after creating your instructor account; replace INSTRUCTOR_UUID
--- insert into public.courses (id, code, name, semester, instructor_id)
--- values ('00000000-0000-0000-0000-000000000001', 'CS 3330',
---         'Software Development Processes and Methodologies', 'Spring 2026',
---         'INSTRUCTOR_UUID');
+-- ── AUTO-CREATE PROFILE ON SIGNUP ────────────────────────────────────────────
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, email, full_name, role)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email,'@',1)),
+    'student'
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
 
--- Weeks seeded separately — see supabase/seed_weeks.sql
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
