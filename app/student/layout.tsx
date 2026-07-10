@@ -34,4 +34,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       <div className="flex flex-1 overflow-hidden">
         <StudentSidebar />
         <main className="flex-1 p-6 overflow-auto">{children}</main>
- 
+      </div>
+    </div>
+  )
+}

@@ -9,4 +9,5 @@ export default function LearnPage() {
     createClient().from('weeks').select('week_number').eq('is_active', true).single()
       .then(({ data }: { data: { week_number: number } | null }) => { if (data) setWeekNumber(data.week_number) })
   }, [])
-  return <
+  return <DemoLearnTab weekNumber={weekNumber} />
+}

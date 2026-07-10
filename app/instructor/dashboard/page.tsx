@@ -213,3 +213,5 @@ function SubmissionRow({ sub, active, onClick }: { sub: Submission; active: bool
       </div>
       <p className="text-xs text-gray-400 mt-0.5">Week {sub.weeks?.week_number} · {sub.weeks?.topic}</p>
     </button>
+  )
+}
