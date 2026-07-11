@@ -52,15 +52,15 @@ export const PROJECT_POOL = [
   { name: 'GrowLog',     description: 'Indoor plant care tracker with light and water reminders' },
 ]
 
-// Seeded random using student ID so the same student always gets the same team
+// Seeded random using student ID for consistent assignment.
+// Uses a multiplicative (Fibonacci) hash with avalanche mixing for good distribution.
 function seededRandom(seed: string, index: number): number {
-  let hash = 0
-  const str = seed + String(index)
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i)
-    hash |= 0
+  let h = (index + 1) * 0x9e3779b9
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(h ^ seed.charCodeAt(i), 0x9e3779b9)
+    h ^= h >>> 16
   }
-  return Math.abs(hash) / 2147483647
+  return (h >>> 0) / 0x100000000
 }
 
 function pickFrom<T>(arr: T[], seed: string, index: number): T {
@@ -71,17 +71,14 @@ export function generateTeamAssignment(studentId: string): {
   project: { name: string; description: string }
   team: TeamMember[]
 } {
-  // Pick project
   const project = pickFrom(PROJECT_POOL, studentId, 0)
 
-  // Shuffle roles — each member gets a unique role
   const shuffledRoles = [...ROLE_OPTIONS]
     .map((role, i) => ({ role, sort: seededRandom(studentId, i + 10) }))
     .sort((a, b) => a.sort - b.sort)
     .map(x => x.role)
     .slice(0, 4)
 
-  // Pick personalities (can repeat — real teams do)
   const team: TeamMember[] = PET_NAMES.map((pet, i) => {
     const role = shuffledRoles[i]
     const personality = pickFrom(PERSONALITIES, studentId, i + 20)
