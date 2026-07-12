@@ -39,8 +39,4 @@ export default function InstructorLayout({ children }: { children: React.ReactNo
       </header>
       <div className="flex flex-1 overflow-hidden">
         <InstructorSidebar />
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
-      </div>
-    </div>
-  )
-}
+        <main className="flex-1 p-6 overflow-a

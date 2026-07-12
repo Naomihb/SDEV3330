@@ -12,13 +12,23 @@ export default function StudentDashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const [{ data: team }, { data: tickets }, { data: activeWeek }, { data: subs }] = await Promise.all([
-        supabase.from('team_assignments').select('*').eq('student_id', user.id).single(),
-        supabase.from('sprint_tickets').select('*').eq('student_id', user.id).eq('sprint_number', 1),
-        supabase.from('weeks').select('*').eq('is_active', true).single(),
+      const [{ data: team }, { data: activeWeeks }, { data: subs }] = await Promise.all([
+        supabase.from('team_assignments').select('*').eq('student_id', user.id).maybeSingle(),
+        supabase.from('weeks').select('*').eq('is_active', true).order('week_number', { ascending: false }),
         supabase.from('submissions').select('id').eq('student_id', user.id),
       ])
-      setData({ team, tickets: tickets ?? [], week: activeWeek, submissionCount: subs?.length ?? 0 })
+
+      // Highest active week drives the sprint number
+      const latestWeek = activeWeeks?.[0] ?? null
+      const sprintNum = latestWeek
+        ? Math.max(1, Math.min(6, Math.ceil((latestWeek.week_number - 1) / 2)))
+        : 1
+
+      const { data: tickets } = await supabase
+        .from('sprint_tickets').select('*')
+        .eq('student_id', user.id).eq('sprint_number', sprintNum)
+
+      setData({ team, tickets: tickets ?? [], week: latestWeek, submissionCount: subs?.length ?? 0 })
     }
     load()
   }, [])
@@ -58,12 +68,4 @@ export default function StudentDashboard() {
             Week {week.week_number} · due {week.due_date}
           </span>
           <h2 className="text-base font-semibold text-gray-900">{week.topic}</h2>
-          <p className="text-sm text-gray-500 mt-1">{week.description}</p>
-          <Link href="/student/activity" className="inline-block mt-3 bg-indigo-600 text-white text-sm rounded-lg px-4 py-2 hover:bg-indigo-700 transition-colors">
-            Go to this week →
-          </Link>
-        </div>
-      )}
-    </div>
-  )
-}
+          <p classNa

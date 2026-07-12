@@ -52,6 +52,8 @@ export interface Week {
   description: string | null
   due_date: string | null
   is_active: boolean
+  prior_topics: string[]
+  created_at: string
 }
 
 export interface TeamAssignment {
@@ -116,6 +118,4 @@ export interface InstructorStudentRow {
   team: TeamAssignment | null
   submission: Submission | null
   scenario: Scenario | null
-  feedback: Feedback | null
-  status: SubmissionStatus
-}
+  feedback:

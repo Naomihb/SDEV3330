@@ -9,12 +9,14 @@ export default function ActivityClient({ week }: { week: any }) {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data: { user, session } } = await supabase.auth.getSession()
-      if (!user || !session) return
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
+      if (!user || !session) { setError('Not logged in'); setLoading(false); return }
 
       // Check for existing scenario
       const { data: existing } = await supabase
@@ -32,13 +34,18 @@ export default function ActivityClient({ week }: { week: any }) {
 
       // Generate new scenario
       setGenerating(true)
-      const res = await fetch('/api/scenarios/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ weekId: week.id }),
-      })
-      const data = await res.json()
-      setScenario(data.content ?? data.error)
+      try {
+        const res = await fetch('/api/scenarios/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ weekId: week.id }),
+        })
+        const data = await res.json()
+        if (!res.ok) setError(data.error ?? `Error ${res.status}`)
+        else setScenario(data.content)
+      } catch (e) {
+        setError('Failed to generate scenario. Check your API key.')
+      }
       setGenerating(false)
       setLoading(false)
     }
@@ -71,6 +78,10 @@ export default function ActivityClient({ week }: { week: any }) {
     </div>
   )
 
+  if (error) return (
+    <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-700">{error}</div>
+  )
+
   return (
     <div className="max-w-3xl space-y-4">
       <div className="bg-white border border-gray-200 rounded-xl p-5">
@@ -96,15 +107,4 @@ export default function ActivityClient({ week }: { week: any }) {
               placeholder="As Scrum Master, I would…"
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder-gray-300" />
             <div className="flex items-center justify-between mt-3">
-              <span className="text-xs text-gray-300">{response.length} chars</span>
-              <button onClick={handleSubmit} disabled={!response.trim() || submitting}
-                className="bg-indigo-600 text-white text-sm rounded-lg px-4 py-2 hover:bg-indigo-700 disabled:opacity-40 transition-colors">
-                {submitting ? 'Submitting…' : 'Submit response'}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
+              <span className="text-xs text-gray-

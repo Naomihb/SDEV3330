@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
 
     const service = createServiceClient()
 
-    const { data: existing } = await service
+    // Use user's client for reads (weeks are public, scenarios + teams use RLS)
+    const { data: existing } = await supabase
       .from('scenarios')
       .select('*')
       .eq('student_id', user.id)
@@ -22,13 +23,13 @@ export async function POST(req: NextRequest) {
       .single()
     if (existing) return NextResponse.json(existing)
 
-    const [{ data: week }, { data: team }] = await Promise.all([
-      service.from('weeks').select('*').eq('id', weekId).single(),
-      service.from('team_assignments').select('*').eq('student_id', user.id).single(),
+    const [{ data: week, error: weekErr }, { data: team }] = await Promise.all([
+      supabase.from('weeks').select('*').eq('id', weekId).single(),
+      supabase.from('team_assignments').select('*').eq('student_id', user.id).single(),
     ])
 
-    if (!week) return NextResponse.json({ error: 'Week not found' }, { status: 404 })
-    if (!team) return NextResponse.json({ error: 'No team assigned — enroll first' }, { status: 404 })
+    if (!week) return NextResponse.json({ error: weekErr?.message ?? 'Week not found' }, { status: 404 })
+    if (!team) return NextResponse.json({ error: 'No team assigned — visit /join/cs3330-f26 to enroll first' }, { status: 404 })
 
     const content = await generateScenario({
       week,
@@ -39,13 +40,8 @@ export async function POST(req: NextRequest) {
 
     const { data: scenario, error } = await service
       .from('scenarios')
-      .insert({ student_id: user.id, week_id: weekId, content })
+      .upsert({ student_id: user.id, week_id: weekId, content }, { onConflict: 'student_id,week_id' })
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json(scenario)
-  } catch (e: unknown) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Server error' }, { status: 500 })
-  }
-}
+    if (error) return NextResponse.json({ error: error.message }, { status:

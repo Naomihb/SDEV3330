@@ -16,6 +16,7 @@ export default function ManageWeeksPage() {
   const [weeks, setWeeks] = useState<Week[]>([])
   const [loading, setLoading] = useState(true)
   const [activating, setActivating] = useState<string | null>(null)
+  const [apiError, setApiError] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -26,22 +27,27 @@ export default function ManageWeeksPage() {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
       if (res.ok) setWeeks(await res.json())
+      else setApiError(`Failed to load weeks (${res.status})`)
       setLoading(false)
     }
     load()
   }, [])
 
-  async function activate(weekId: string) {
+  async function setActive(weekId: string, active: boolean) {
     setActivating(weekId)
+    setApiError('')
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch('/api/instructor/weeks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-      body: JSON.stringify({ weekId }),
+      body: JSON.stringify({ weekId, active }),
     })
     if (res.ok) {
-      setWeeks(prev => prev.map(w => ({ ...w, is_active: w.id === weekId })))
+      setWeeks(prev => prev.map(w => ({ ...w, is_active: active ? w.id === weekId : false })))
+    } else {
+      const body = await res.json().catch(() => ({}))
+      setApiError(body.error ?? `Error ${res.status}`)
     }
     setActivating(null)
   }
@@ -56,6 +62,10 @@ export default function ManageWeeksPage() {
     <div className="max-w-2xl space-y-4">
       <h1 className="font-semibold text-gray-900">Manage weeks</h1>
       <p className="text-sm text-gray-500">Activate a week to make its activity visible to students.</p>
+
+      {apiError && (
+        <p className="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg">{apiError}</p>
+      )}
 
       <div className="space-y-2">
         {weeks.map(week => (
@@ -77,16 +87,4 @@ export default function ManageWeeksPage() {
               </div>
               <p className="text-xs text-gray-400 mt-0.5">Due {new Date(week.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
             </div>
-            {!week.is_active && week.has_submission && (
-              <button onClick={() => activate(week.id)}
-                disabled={activating === week.id}
-                className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 disabled:opacity-50">
-                {activating === week.id ? '…' : 'Activate'}
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+            <div className="flex
