@@ -1,13 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -19,7 +22,10 @@ export default function LoginPage() {
     const supabase = createClient()
 
     if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { error } = await supabase.auth.signUp({
+        email, password,
+        options: { data: { full_name: fullName.trim() || email.split('@')[0] } }
+      })
       if (error) { setError(error.message); setLoading(false); return }
       setError('Check your email to confirm your account, then log in.')
       setMode('login')
@@ -37,7 +43,9 @@ export default function LoginPage() {
       .eq('id', data.user.id)
       .single()
 
-    router.push(profile?.role === 'instructor' ? '/instructor/dashboard' : '/student/dashboard')
+    if (next) { router.push(next); return }
+    const role = (profile as { role: string } | null)?.role
+    router.push(role === 'instructor' ? '/instructor/dashboard' : '/student/dashboard')
   }
 
   return (
@@ -61,6 +69,14 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'signup' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Full name</label>
+                <input type="text" required value={fullName} onChange={e => setFullName(e.target.value)}
+                  placeholder="Jane Smith"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300" />
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)}

@@ -14,7 +14,8 @@ export default function InstructorLayout({ children }: { children: React.ReactNo
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-      if (profile?.role !== 'instructor') { router.push('/student/dashboard'); return }
+      const role = (profile as { role: string } | null)?.role
+      if (role !== 'instructor') { router.push('/student/dashboard'); return }
       setReady(true)
     }
     check()

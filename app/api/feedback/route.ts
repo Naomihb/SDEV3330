@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     const service = createServiceClient()
     const { data: profile } = await service.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'instructor')
+    if ((profile as { role: string } | null)?.role !== 'instructor')
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { submissionId, grade, feedbackText } = await req.json()

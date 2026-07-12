@@ -6,9 +6,10 @@ async function getInstructor(req: NextRequest) {
   const supabase = createClient(token)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
+  // Use user's own client for role check (all authenticated users can read profiles)
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if ((profile as { role: string } | null)?.role !== 'instructor') return null
   const service = createServiceClient()
-  const { data: profile } = await service.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'instructor') return null
   return { user, service }
 }
 
@@ -39,15 +40,17 @@ export async function POST(req: NextRequest) {
     const ctx = await getInstructor(req)
     if (!ctx) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { weekId } = await req.json()
+    const { weekId, active } = await req.json()
     if (!weekId) return NextResponse.json({ error: 'weekId required' }, { status: 400 })
 
-    // Deactivate all weeks in this course, then activate target
     const { data: targetWeek } = await ctx.service.from('weeks').select('course_id').eq('id', weekId).single()
     if (!targetWeek) return NextResponse.json({ error: 'Week not found' }, { status: 404 })
 
-    await ctx.service.from('weeks').update({ is_active: false }).eq('course_id', targetWeek.course_id)
-    const { error } = await ctx.service.from('weeks').update({ is_active: true }).eq('id', weekId)
+    // Just toggle the target week — other weeks are unaffected
+    const { error } = await ctx.service
+      .from('weeks')
+      .update({ is_active: active !== false })
+      .eq('id', weekId)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ success: true })
