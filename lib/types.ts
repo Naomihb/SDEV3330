@@ -118,4 +118,5 @@ export interface InstructorStudentRow {
   team: TeamAssignment | null
   submission: Submission | null
   scenario: Scenario | null
-  feedback:
+  feedback: Feedback | null
+}

@@ -18,4 +18,8 @@ export default async function ActivityPage() {
   )
 
   return (
-  
+      <div className="max-w-3xl">
+      <ActivityClient week={week} />
+    </div>
+  )
+}

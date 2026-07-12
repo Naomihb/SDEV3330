@@ -87,4 +87,28 @@ export default function LoginPage() {
               <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
               <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300" />
+            </div>
+
+            {error && (
+              <p className={`text-xs rounded-lg px-3 py-2 ${
+                error.includes('Check your email') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+              }`}>{error}</p>
+            )}
+
+            <button type="submit" disabled={loading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+              {loading ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create account'}
+            </button>
+          </form>
+        </div>
+
+        {mode === 'login' && (
+          <p className="text-center text-xs text-gray-400 mt-4">
+            New student? Switch to <button onClick={() => setMode('signup')} className="text-indigo-500 hover:underline">Sign up</button>
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}

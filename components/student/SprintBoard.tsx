@@ -64,4 +64,23 @@ export default function SprintBoard() {
                   <p className="text-sm text-gray-900 mb-2 leading-snug">{ticket.title}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-400">{ticket.assignee_name?.split(' ')[0]}{ticket.is_blocked && <span className="text-amber-600 ml-1">blocked</span>}</span>
-                    <span className="text-xs t
+                    <span className="text-xs text-gray-400 bg-gray-50 rounded px-1.5">{ticket.story_points}pt</span>
+                  </div>
+                  <div className="flex gap-1 mt-2 flex-wrap">
+                    {others.map(o => (
+                      <button key={o.key} onClick={() => move(ticket.id, o.key)}
+                        className="text-xs text-indigo-500 hover:text-indigo-700 border border-indigo-200 rounded px-1.5 py-0.5">
+                        → {o.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+    </div>
+  )
+}

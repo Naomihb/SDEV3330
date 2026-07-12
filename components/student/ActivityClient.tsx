@@ -107,4 +107,15 @@ export default function ActivityClient({ week }: { week: any }) {
               placeholder="As Scrum Master, I would…"
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder-gray-300" />
             <div className="flex items-center justify-between mt-3">
-              <span className="text-xs text-gray-
+              <span className="text-xs text-gray-400">{response.length} chars</span>
+              <button onClick={handleSubmit} disabled={submitting || response.trim().length < 50}
+                className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 px-4 py-1.5 rounded-lg transition-colors">
+                {submitting ? 'Submitting…' : 'Submit response'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

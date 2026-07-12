@@ -68,4 +68,12 @@ export default function StudentDashboard() {
             Week {week.week_number} · due {week.due_date}
           </span>
           <h2 className="text-base font-semibold text-gray-900">{week.topic}</h2>
-          <p classNa
+          <p className="text-sm text-gray-500 mt-1">{week.description}</p>
+          <Link href="/student/activity" className="inline-block mt-3 text-sm text-indigo-600 font-medium hover:text-indigo-700">
+            Go to this week's activity →
+          </Link>
+        </div>
+      )}
+    </div>
+  )
+}

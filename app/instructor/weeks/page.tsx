@@ -87,4 +87,22 @@ export default function ManageWeeksPage() {
               </div>
               <p className="text-xs text-gray-400 mt-0.5">Due {new Date(week.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
             </div>
-            <div className="flex
+            <div className="flex gap-2">
+              {week.is_active ? (
+                <button onClick={() => setActive(week.id, false)} disabled={activating === week.id}
+                  className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 disabled:opacity-40 transition-colors">
+                  {activating === week.id ? '…' : 'Deactivate'}
+                </button>
+              ) : (
+                <button onClick={() => setActive(week.id, true)} disabled={activating === week.id}
+                  className="text-xs text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg px-3 py-1.5 disabled:opacity-40 transition-colors">
+                  {activating === week.id ? '…' : 'Activate'}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
