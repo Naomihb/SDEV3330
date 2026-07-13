@@ -6,7 +6,6 @@ interface Week {
   id: string
   week_number: number
   topic: string
-  prior_topics: string[]
   is_active: boolean
   due_date: string
   has_submission: boolean
@@ -44,7 +43,7 @@ export default function ManageWeeksPage() {
       body: JSON.stringify({ weekId, active }),
     })
     if (res.ok) {
-      setWeeks(prev => prev.map(w => ({ ...w, is_active: active ? w.id === weekId : false })))
+      setWeeks(prev => prev.map(w => w.id === weekId ? { ...w, is_active: active } : w))
     } else {
       const body = await res.json().catch(() => ({}))
       setApiError(body.error ?? `Error ${res.status}`)
@@ -61,7 +60,7 @@ export default function ManageWeeksPage() {
   return (
     <div className="max-w-2xl space-y-4">
       <h1 className="font-semibold text-gray-900">Manage weeks</h1>
-      <p className="text-sm text-gray-500">Activate a week to make its activity visible to students.</p>
+      <p className="text-sm text-gray-500">Activate a week to make its activity visible to students. Multiple weeks can be active simultaneously.</p>
 
       {apiError && (
         <p className="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg">{apiError}</p>
@@ -85,7 +84,9 @@ export default function ManageWeeksPage() {
                   <span className="text-xs bg-gray-100 text-gray-500 rounded px-1.5 py-0.5">No submission</span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">Due {new Date(week.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Due {week.due_date ? new Date(week.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+              </p>
             </div>
             <div className="flex gap-2">
               {week.is_active ? (
@@ -102,11 +103,6 @@ export default function ManageWeeksPage() {
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  )
-}
-
       </div>
     </div>
   )

@@ -18,7 +18,6 @@ export default function StudentDashboard() {
         supabase.from('submissions').select('id').eq('student_id', user.id),
       ])
 
-      // Highest active week drives the sprint number
       const latestWeek = activeWeeks?.[0] ?? null
       const sprintNum = latestWeek
         ? Math.max(1, Math.min(6, Math.ceil((latestWeek.week_number - 1) / 2)))
@@ -33,7 +32,11 @@ export default function StudentDashboard() {
     load()
   }, [])
 
-  if (!data) return <div className="flex items-center justify-center h-64"><div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /></div>
+  if (!data) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
 
   const { team, tickets, week, submissionCount } = data
   const done = tickets.filter(t => t.status === 'done').length
@@ -59,7 +62,7 @@ export default function StudentDashboard() {
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs text-gray-400 mb-1">Active week</p>
           <p className="text-base font-semibold text-gray-900">{week?.topic ?? '—'}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Week {week?.week_number}</p>
+          <p className="text-xs text-gray-400 mt-0.5">Week {week?.week_number ?? '—'}</p>
         </div>
       </div>
       {week && (
@@ -70,14 +73,10 @@ export default function StudentDashboard() {
           <h2 className="text-base font-semibold text-gray-900">{week.topic}</h2>
           <p className="text-sm text-gray-500 mt-1">{week.description}</p>
           <Link href="/student/activity" className="inline-block mt-3 text-sm text-indigo-600 font-medium hover:text-indigo-700">
-            Go to this week's activity →
+            Go to this week&apos;s activity →
           </Link>
         </div>
       )}
-    </div>
-  )
-}
-   )}
     </div>
   )
 }
