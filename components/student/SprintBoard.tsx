@@ -84,3 +84,8 @@ export default function SprintBoard() {
     </div>
   )
 }
+)}
+    </div>
+    </div>
+  )
+}

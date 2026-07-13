@@ -23,3 +23,20 @@ export default async function ActivityPage() {
     </div>
   )
 }
+line-block text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5 mb-2">
+          Week {week.week_number} · due {week.due_date}
+        </span>
+        <h1 className="text-xl font-semibold text-gray-900">{week.topic}</h1>
+        <p className="text-sm text-gray-500 mt-1">{week.description}</p>
+      </div>
+      {SUBMISSION_WEEKS_SET.has(week.week_number) ? (
+        <ActivityClient week={week} />
+      ) : (
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <p className="text-sm font-medium text-gray-700 mb-1">No submission this week</p>
+          <p className="text-sm text-gray-400">{week.description}</p>
+        </div>
+      )}
+    </div>
+  )
+}

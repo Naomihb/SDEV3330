@@ -2,4 +2,5 @@ packages:
   - '.'
 
 allowBuilds:
-  '0': unrs-resolv
+  '0': unrs-resolver
+  unrs-resolver: false

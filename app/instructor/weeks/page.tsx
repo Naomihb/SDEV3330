@@ -106,3 +106,8 @@ export default function ManageWeeksPage() {
     </div>
   )
 }
+
+      </div>
+    </div>
+  )
+}

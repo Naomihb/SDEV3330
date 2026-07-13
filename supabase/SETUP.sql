@@ -223,4 +223,11 @@ begin
   (v_course_id,8, 'Requirements Workshop',                              'A peer requirements review reveals inconsistencies. A stakeholder wants new features added mid-sprint.',      '2026-10-14',false,ARRAY['Estimation & Planning','Requirements Engineering']),
   (v_course_id,9, 'Git & Version Control / Configuration Management',   'A merge conflict has stalled two developers and a third-party library just published a breaking update.',     '2026-10-21',false,ARRAY['Requirements Engineering','Requirements Workshop']),
   (v_course_id,10,'Software Design Principles',                         'Apply SOLID principles to a messy module. One developer refuses to refactor, citing schedule pressure.',      '2026-10-28',false,ARRAY['Requirements Workshop','Git & Version Control / Configuration Management']),
-  (v_course_id,11,'Architectural Styles & Design Patterns',             'Choose an architectural pattern for a new feature. A senior developer strongly disag
+  (v_course_id,11,'Architectural Styles & Design Patterns',             'Choose an architectural pattern for a new feature. A senior developer strongly disagrees with your choice.',  '2026-11-04',false,ARRAY['Git & Version Control / Configuration Management','Software Design Principles']),
+  (v_course_id,12,'Code Reviews & Industry Tools',                      'Facilitate a code review where one developer takes critical feedback personally and pushes back.',             '2026-11-11',false,ARRAY['Software Design Principles','Architectural Styles & Design Patterns']),
+  (v_course_id,13,'XP, Lean & Kanban',                                  'A stakeholder asks whether your team should switch from Scrum to Kanban for the next phase of the project.',  '2026-11-18',false,ARRAY['Architectural Styles & Design Patterns','Code Reviews & Industry Tools']),
+  (v_course_id,14,'Presentation Rehearsal',                             'No simulation this week. Focus on your final project presentation.',                                           '2026-12-02',false,'{}'),
+  (v_course_id,15,'Final Presentations',                                'Present your semester project during finals week.',                                                            '2026-12-09',false,'{}');
+
+  raise notice 'Done! Course ID: %', v_course_id;
+end $seed$;
