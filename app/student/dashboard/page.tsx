@@ -18,7 +18,7 @@ export default function StudentDashboard() {
         supabase.from('submissions').select('id').eq('student_id', user.id),
       ])
 
-      const latestWeek = activeWeeks?.[0] ?? null
+      const latestWeek = (activeWeeks as { week_number: number; topic: string; due_date: string; is_active: boolean }[] | null)?.[0] ?? null
       const sprintNum = latestWeek
         ? Math.max(1, Math.min(6, Math.ceil((latestWeek.week_number - 1) / 2)))
         : 1
