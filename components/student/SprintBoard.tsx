@@ -42,7 +42,7 @@ export default function SprintBoard() {
 
   async function move(id: string, status: string) {
     setTickets(prev => prev.map(t => t.id === id ? { ...t, status } : t))
-    await createClient().from('sprint_tickets').update({ status }).eq('id', id)
+    await createClient().from('sprint_tickets').update({ status } as never).eq('id', id)
   }
 
   if (loading) return (
