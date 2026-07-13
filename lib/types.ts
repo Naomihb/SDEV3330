@@ -120,5 +120,3 @@ export interface InstructorStudentRow {
   scenario: Scenario | null
   feedback: Feedback | null
 }
-status: SubmissionStatus
-}

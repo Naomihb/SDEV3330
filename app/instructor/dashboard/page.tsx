@@ -36,7 +36,7 @@ export default function InstructorDashboardPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setSubmissions(data)
+        setSubmissions(data as Submission[])
       }
       setLoading(false)
     }
@@ -78,7 +78,9 @@ export default function InstructorDashboardPage() {
     setSaving(false)
   }
 
-  const weeks = Array.from(new Set(submissions.map(s => s.weeks?.week_number))).sort((a, b) => a - b)
+  const weeks = Array.from(new Set(submissions.map(s => s.weeks?.week_number)))
+    .filter((w): w is number => w !== undefined)
+    .sort((a, b) => a - b)
   const filtered = filterWeek === 'all' ? submissions : submissions.filter(s => s.weeks?.week_number === filterWeek)
   const graded = filtered.filter(s => s.feedback?.[0])
   const ungraded = filtered.filter(s => !s.feedback?.[0])
