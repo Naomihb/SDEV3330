@@ -23,15 +23,17 @@ export default function SprintBoard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const { data: activeWeeks } = await supabase
+      const activeWeeks = (await supabase
         .from('weeks').select('week_number').eq('is_active', true).order('week_number', { ascending: false })
+      ).data as { week_number: number }[] | null
       const highestActive = activeWeeks?.[0]?.week_number ?? 2
       const sprint = Math.max(1, Math.min(6, Math.ceil((highestActive - 1) / 2)))
       setSprintNumber(sprint)
 
-      const { data } = await supabase
+      const data = (await supabase
         .from('sprint_tickets').select('*')
         .eq('student_id', user.id).eq('sprint_number', sprint).order('ticket_id')
+      ).data as Ticket[] | null
       setTickets(data ?? [])
       setLoading(false)
     }
@@ -57,43 +59,40 @@ export default function SprintBoard() {
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-4">Sprint {sprintNumber}</p>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold text-gray-900">Sprint {sprintNumber} board</h1>
+        <span className="text-xs text-gray-400 bg-gray-100 rounded px-2 py-0.5">{tickets.filter(t => t.status === 'done').length}/{tickets.length} done</span>
+      </div>
       <div className="grid grid-cols-3 gap-4">
-        {cols.map(col => {
-          const colTickets = tickets.filter(t => t.status === col.key)
-          const others = cols.filter(c => c.key !== col.key)
-          return (
-            <div key={col.key}>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">{col.label}</span>
-                <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">{colTickets.length}</span>
-              </div>
-              <div className="space-y-2">
-                {colTickets.map(ticket => (
-                  <div key={ticket.id} className={`bg-white rounded-lg border p-3 ${ticket.is_blocked ? 'border-amber-300' : 'border-gray-200'}`}>
-                    <p className="text-xs text-gray-400 mb-1">{ticket.ticket_id}</p>
-                    <p className="text-sm text-gray-900 mb-2 leading-snug">{ticket.title}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400">
-                        {ticket.assignee?.split(' ')[0]}
-                        {ticket.is_blocked && <span className="text-amber-600 ml-1">blocked</span>}
-                      </span>
-                      <span className="text-xs text-gray-400 bg-gray-50 rounded px-1.5">{ticket.story_points}pt</span>
+        {cols.map(col => (
+          <div key={col.key} className="bg-gray-50 rounded-xl p-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">{col.label}</p>
+            <div className="space-y-2">
+              {tickets.filter(t => t.status === col.key).map(t => (
+                <div key={t.id} className="bg-white rounded-lg border border-gray-200 p-3 text-sm shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs text-indigo-500 font-mono mb-0.5">{t.ticket_id}</p>
+                      <p className="text-gray-800 text-sm leading-snug">{t.title}</p>
                     </div>
-                    <div className="flex gap-1 mt-2 flex-wrap">
-                      {others.map(o => (
-                        <button key={o.key} onClick={() => move(ticket.id, o.key)}
-                          className="text-xs text-indigo-500 hover:text-indigo-700 border border-indigo-200 rounded px-1.5 py-0.5">
-                          → {o.label}
-                        </button>
-                      ))}
-                    </div>
+                    {t.is_blocked && (
+                      <span className="shrink-0 text-xs bg-red-50 text-red-500 border border-red-200 rounded px-1.5 py-0.5">Blocked</span>
+                    )}
                   </div>
-                ))}
-              </div>
+                  <div className="flex items-center justify-between mt-2.5">
+                    <span className="text-xs text-gray-400">{t.assignee} · {t.story_points}pt</span>
+                    <select value={t.status} onChange={e => move(t.id, e.target.value)}
+                      className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white">
+                      <option value="todo">To do</option>
+                      <option value="in_progress">In progress</option>
+                      <option value="done">Done</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
             </div>
-          )
-        })}
+          </div>
+        ))}
       </div>
     </div>
   )

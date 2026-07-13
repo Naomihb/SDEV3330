@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+type ScenarioRow = { id: string; content: string }
+type SubRow = { response_text: string }
+
 export default function ActivityClient({ week }: { week: any }) {
   const [scenario, setScenario] = useState<string | null>(null)
   const [submission, setSubmission] = useState<any>(null)
@@ -19,14 +22,16 @@ export default function ActivityClient({ week }: { week: any }) {
       if (!user || !session) { setError('Not logged in'); setLoading(false); return }
 
       // Check for existing scenario
-      const { data: existing } = await supabase
+      const existing = (await supabase
         .from('scenarios').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
+      ).data as ScenarioRow | null
 
       if (existing) {
         setScenario(existing.content)
         // Check for existing submission
-        const { data: sub } = await supabase
+        const sub = (await supabase
           .from('submissions').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
+        ).data as SubRow | null
         if (sub) { setSubmission(sub); setResponse(sub.response_text) }
         setLoading(false)
         return
@@ -58,8 +63,9 @@ export default function ActivityClient({ week }: { week: any }) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
 
-    const { data: scenarioRow } = await supabase
+    const scenarioRow = (await supabase
       .from('scenarios').select('id').eq('week_id', week.id).single()
+    ).data as { id: string } | null
 
     const res = await fetch('/api/submissions', {
       method: 'POST',
