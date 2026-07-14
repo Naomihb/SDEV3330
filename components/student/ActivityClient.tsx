@@ -46,7 +46,7 @@ export default function ActivityClient({ week }: { week: any }) {
           body: JSON.stringify({ weekId: week.id }),
         })
         const data = await res.json()
-        if (!res.ok) setError(data.error ?? `Error ${res.status}`)
+        if (!res.ok) setError(data.error?.includes('apiKey') || data.error?.includes('authToken') ? 'Scenario generation is not configured yet — ask your instructor.' : (data.error ?? `Error ${res.status}`))
         else setScenario(data.content)
       } catch (e) {
         setError('Failed to generate scenario. Check your API key.')
