@@ -1,15 +1,32 @@
-import { createServiceClient } from '@/lib/supabase/server'
+'use client'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import ActivityClient from '@/components/student/ActivityClient'
 
-export const dynamic = 'force-dynamic'
+const SUBMISSION_WEEKS = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
 
-export default async function ActivityPage() {
-  const supabase = createServiceClient()
-  const { data: activeWeeks } = await supabase
-    .from('weeks').select('*').eq('is_active', true).order('week_number', { ascending: false })
+export default function ActivityPage() {
+  const [week, setWeek] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  const SUBMISSION_WEEKS_SET = new Set([2,3,4,5,6,7,8,9,10,11,12,13])
-  const week = activeWeeks?.find(w => SUBMISSION_WEEKS_SET.has(w.week_number)) ?? activeWeeks?.[0] ?? null
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('weeks').select('*').eq('is_active', true)
+        .order('week_number', { ascending: false })
+      const activeWeeks = (data ?? []) as any[]
+      setWeek(activeWeeks.find(w => SUBMISSION_WEEKS.has(w.week_number)) ?? activeWeeks[0] ?? null)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
 
   if (!week) return (
     <div className="max-w-3xl">
