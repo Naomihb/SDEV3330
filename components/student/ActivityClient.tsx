@@ -105,7 +105,6 @@ export default function ActivityClient({ week }: { week: any }) {
           <div>
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap mb-3">{response}</div>
             <p className="text-sm text-green-600">✓ Submitted · awaiting instructor review</p>
-            <button onClick={() => setSubmission(null)} className="mt-2 text-xs text-indigo-500 hover:underline">Edit response</button>
           </div>
         ) : (
           <>
