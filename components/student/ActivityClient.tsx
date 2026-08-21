@@ -21,18 +21,18 @@ export default function ActivityClient({ week }: { week: any }) {
       const user = session?.user
       if (!user || !session) { setError('Not logged in'); setLoading(false); return }
 
-      // Check for existing scenario
-      const existing = (await supabase
-        .from('scenarios').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
-      ).data as ScenarioRow | null
+      // Always check for existing scenario and submission in parallel
+      const [existingScenario, existingSub] = await Promise.all([
+        supabase.from('scenarios').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
+          .then(r => r.data as ScenarioRow | null),
+        supabase.from('submissions').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
+          .then(r => r.data as SubRow | null),
+      ])
 
-      if (existing) {
-        setScenario(existing.content)
-        // Check for existing submission
-        const sub = (await supabase
-          .from('submissions').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
-        ).data as SubRow | null
-        if (sub) { setSubmission(sub); setResponse(sub.response_text) }
+      if (existingSub) { setSubmission(existingSub); setResponse(existingSub.response_text) }
+
+      if (existingScenario) {
+        setScenario(existingScenario.content)
         setLoading(false)
         return
       }
@@ -84,7 +84,7 @@ export default function ActivityClient({ week }: { week: any }) {
     </div>
   )
 
-  if (error) return (
+  if (error && !submission) return (
     <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-700">{error}</div>
   )
 
