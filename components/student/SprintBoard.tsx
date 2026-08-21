@@ -7,7 +7,7 @@ type Ticket = {
   ticket_id: string
   title: string
   status: string
-  assignee: string
+  assignee_name: string
   story_points: number
   is_blocked: boolean
 }
@@ -80,7 +80,7 @@ export default function SprintBoard() {
                     )}
                   </div>
                   <div className="flex items-center justify-between mt-2.5">
-                    <span className="text-xs text-gray-400">{t.assignee} · {t.story_points}pt</span>
+                    <span className="text-xs text-gray-400">{t.assignee_name} · {t.story_points}pt</span>
                     <select value={t.status} onChange={e => move(t.id, e.target.value)}
                       className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white">
                       <option value="todo">To do</option>

@@ -25,18 +25,20 @@ export async function POST(req: NextRequest, { params }: { params: { code: strin
     if (existing) return NextResponse.json({ error: 'Already enrolled' }, { status: 409 })
 
     // Enroll
-    await service.from('enrollments').insert({ student_id: user.id, course_id: course.id })
+    const { error: enrollErr } = await service.from('enrollments').insert({ student_id: user.id, course_id: course.id })
+    if (enrollErr) return NextResponse.json({ error: `Enrollment failed: ${enrollErr.message}` }, { status: 500 })
 
     // Generate team assignment
     const { project, team } = generateTeamAssignment(user.id)
 
-    await service.from('team_assignments').insert({
+    const { error: teamErr } = await service.from('team_assignments').insert({
       student_id: user.id,
       course_id: course.id,
       project_name: project.name,
       project_description: project.description,
       team_config: team,
     })
+    if (teamErr) return NextResponse.json({ error: `Team assignment failed: ${teamErr.message}` }, { status: 500 })
 
     // Seed 48 sprint tickets (6 sprints x 8 tickets)
     const prefix = project.name.slice(0, 3).toUpperCase()
@@ -105,12 +107,13 @@ export async function POST(req: NextRequest, { params }: { params: { code: strin
       ticket_id: `${prefix}-S${t.sprint}-${String((i % 8) + 1).padStart(2, '0')}`,
       sprint_number: t.sprint,
       title: t.title,
-      assignee: t.assignee,
+      assignee_name: t.assignee,
       story_points: t.points,
       status: t.status,
     }))
 
-    await service.from('sprint_tickets').insert(ticketRows)
+    const { error: ticketErr } = await service.from('sprint_tickets').insert(ticketRows)
+    if (ticketErr) return NextResponse.json({ error: `Ticket seeding failed: ${ticketErr.message}` }, { status: 500 })
 
     return NextResponse.json({ project: project.name, team })
   } catch (e: unknown) {

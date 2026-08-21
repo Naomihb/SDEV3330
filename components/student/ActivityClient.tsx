@@ -64,7 +64,7 @@ export default function ActivityClient({ week }: { week: any }) {
     if (!session) return
 
     const scenarioRow = (await supabase
-      .from('scenarios').select('id').eq('week_id', week.id).single()
+      .from('scenarios').select('id').eq('week_id', week.id).eq('student_id', session.user.id).single()
     ).data as { id: string } | null
 
     const res = await fetch('/api/submissions', {

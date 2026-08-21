@@ -36,6 +36,7 @@ create table public.courses (
   name            text not null,           -- e.g. "Software Dev Processes"
   semester        text not null,           -- e.g. "Spring 2026"
   instructor_id   uuid references public.profiles(id) on delete set null,
+  join_code       text unique,             -- e.g. "cs3330-f26", used by /join/[code]
   created_at      timestamptz default now()
 );
 
