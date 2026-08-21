@@ -24,12 +24,10 @@ const config = {
     '!**/node_modules/**',
   ],
   coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 75,
-      lines: 75,
-      statements: 75,
-    },
+    // API routes and UI components are covered by the pytest integration
+    // suite (tests/integration), not jest — only gate pure logic here.
+    './utils/': { branches: 70, functions: 75, lines: 75, statements: 75 },
+    './lib/ai/': { branches: 70, functions: 75, lines: 75, statements: 75 },
   },
   coverageReporters: ['text', 'lcov', 'html'],
   transform: {
