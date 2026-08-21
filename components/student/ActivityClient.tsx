@@ -22,12 +22,12 @@ export default function ActivityClient({ week }: { week: any }) {
       if (!user || !session) { setError('Not logged in'); setLoading(false); return }
 
       // Always check for existing scenario and submission in parallel
-      const [existingScenario, existingSub] = await Promise.all([
-        supabase.from('scenarios').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
-          .then(r => r.data as ScenarioRow | null),
-        supabase.from('submissions').select('*').eq('student_id', user.id).eq('week_id', week.id).single()
-          .then(r => r.data as SubRow | null),
+      const [scenarioRes, subRes] = await Promise.all([
+        supabase.from('scenarios').select('*').eq('student_id', user.id).eq('week_id', week.id).single(),
+        supabase.from('submissions').select('*').eq('student_id', user.id).eq('week_id', week.id).single(),
       ])
+      const existingScenario = scenarioRes.data as ScenarioRow | null
+      const existingSub = subRes.data as SubRow | null
 
       if (existingSub) { setSubmission(existingSub); setResponse(existingSub.response_text) }
 
