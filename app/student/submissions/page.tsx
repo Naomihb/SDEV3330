@@ -41,7 +41,7 @@ export default function SubmissionsPage() {
       {subs.length === 0 && <p className="text-sm text-gray-400">No submissions yet. Complete this week&apos;s activity to get started.</p>}
       <div className="space-y-4">
         {subs.map(sub => {
-          const fb = sub.feedback?.[0]
+          const fb = Array.isArray(sub.feedback) ? sub.feedback[0] : sub.feedback
           return (
             <div key={sub.id} className="bg-white border border-gray-200 rounded-xl p-5">
               <div className="flex items-start justify-between mb-3">

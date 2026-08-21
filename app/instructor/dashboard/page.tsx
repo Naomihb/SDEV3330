@@ -36,7 +36,12 @@ export default function InstructorDashboardPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setSubmissions(data as Submission[])
+        // Supabase returns the feedback embed as an object (to-one) — normalize to array
+        const normalized = (data as any[]).map(s => ({
+          ...s,
+          feedback: Array.isArray(s.feedback) ? s.feedback : s.feedback ? [s.feedback] : [],
+        }))
+        setSubmissions(normalized as Submission[])
       }
       setLoading(false)
     }

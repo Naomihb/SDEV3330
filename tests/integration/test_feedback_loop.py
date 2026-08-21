@@ -89,7 +89,9 @@ class TestFeedbackLoop:
         assert rows, "Student cannot read own submission"
         fb = rows[0].get("feedback")
         assert fb, "Student cannot read feedback on own submission (RLS or join broken)"
-        assert fb[0]["grade"] in ("S", "U", "E", "I")
+        # PostgREST may return the embed as an object (to-one) or a list
+        fb_row = fb[0] if isinstance(fb, list) else fb
+        assert fb_row["grade"] in ("S", "U", "E", "I")
 
     def test_feedback_grade_is_valid_enum(self, instructor_token, student_submission):
         resp = api(
