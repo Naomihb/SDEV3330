@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 const GRADE_STYLES: Record<string, string> = {
-  strong: 'bg-green-50 text-green-700 border-green-200',
-  satisfactory: 'bg-amber-50 text-amber-700 border-amber-200',
-  needs_revision: 'bg-red-50 text-red-700 border-red-200',
+  E: 'bg-green-50 text-green-700 border-green-200',
+  S: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  U: 'bg-red-50 text-red-700 border-red-200',
+  I: 'bg-amber-50 text-amber-700 border-amber-200',
 }
-const GRADE_LABELS: Record<string, string> = { strong: 'Strong', satisfactory: 'Satisfactory', needs_revision: 'Needs revision' }
+const GRADE_LABELS: Record<string, string> = { E: 'Excellent', S: 'Satisfactory', U: 'Unsatisfactory', I: 'Incomplete' }
 
 export default function SubmissionsPage() {
   const [subs, setSubs] = useState<any[]>([])
