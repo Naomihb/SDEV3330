@@ -22,7 +22,7 @@ export default function SubmissionsPage() {
         .from('submissions')
         .select('*, weeks(week_number, topic), scenarios(content), feedback(*)')
         .eq('student_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('submitted_at', { ascending: false })
       setSubs(data ?? [])
       setLoading(false)
     }

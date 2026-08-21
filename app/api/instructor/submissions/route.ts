@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     const { data, error } = await service
       .from('submissions')
       .select('*, profiles(full_name, email), weeks(week_number, topic), feedback(grade, feedback_text)')
-      .order('created_at', { ascending: false })
+      .order('submitted_at', { ascending: false })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data)
