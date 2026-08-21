@@ -149,3 +149,95 @@ jobs:
           name: pytest-results
           path: tests/integration/.pytest_cache/
           retention-days: 14
+
+  # ─────────────────────────────────────────────
+  # Job 4: Integration tests against LOCAL Supabase
+  # Hermetic: runs on every push/PR, catches schema
+  # drift between code and migrations.
+  # ─────────────────────────────────────────────
+  integration-local:
+    name: Integration Tests (local Supabase)
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase (applies migrations)
+        run: supabase start
+
+      - name: Export Supabase env
+        run: |
+          supabase status -o env | tee supabase.env
+          grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY|DB_URL)=' supabase.env | sed 's/"//g' >> "$GITHUB_ENV"
+
+      - name: Create CI instructor user
+        run: |
+          curl -sf -X POST "$API_URL/auth/v1/admin/users" \
+            -H "apikey: $SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"instructor-ci@test.example","password":"CiInstructor123!","email_confirm":true}'
+
+      - name: Seed course and weeks
+        run: psql "$DB_URL" -v ON_ERROR_STOP=1 -f tests/integration/ci_seed.sql
+
+      - name: Install Node dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.API_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: placeholder-key
+
+      - name: Start Next.js server
+        run: pnpm start &
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.API_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: placeholder-key
+
+      - name: Wait for server
+        run: |
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:3000 >/dev/null && echo "Server ready" && break
+            sleep 3
+          done
+
+      - name: Install Python test dependencies
+        run: pip install -r tests/requirements-test.txt
+
+      - name: Run integration tests
+        run: |
+          cd tests/integration
+          pytest -v --tb=short
+        env:
+          BASE_URL: http://localhost:3000
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.API_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
+          TEST_STUDENT_EMAIL: integration-student@test.example
+          TEST_STUDENT_PASSWORD: IntegrationTest123!
+          TEST_INSTRUCTOR_EMAIL: instructor-ci@test.example
+          TEST_INSTRUCTOR_PASSWORD: CiInstructor123!
+          TEST_JOIN_CODE: cs3330-f26
