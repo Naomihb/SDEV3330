@@ -54,6 +54,7 @@ create table public.weeks (
   description  text,
   due_date     date,
   is_active    boolean default false,
+  prior_topics text[] default '{}',
   created_at   timestamptz default now(),
   unique(course_id, week_number)
 );
