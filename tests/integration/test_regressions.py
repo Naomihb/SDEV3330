@@ -218,3 +218,41 @@ class TestWriteReadLoops:
             json={"status": ticket["status"]},
             timeout=15,
         )
+
+
+class TestBacklogPull:
+
+    def test_pull_ticket_into_current_sprint_round_trips(self, enrolled_student_token):
+        """Backlog page: pulling a future-sprint ticket into the current sprint
+        must persist and appear on the current sprint board query."""
+        rows = rest("sprint_tickets", enrolled_student_token,
+                    select="id,sprint_number,status",
+                    sprint_number="gt.1", limit="1", order="sprint_number.asc").json()
+        if not rows:
+            pytest.skip("No backlog tickets to pull")
+        ticket = rows[0]
+        original_sprint = ticket["sprint_number"]
+
+        def patch(sprint, status):
+            return httpx.patch(
+                f"{SUPABASE_URL}/rest/v1/sprint_tickets",
+                headers={"apikey": SUPABASE_ANON_KEY,
+                         "Authorization": f"Bearer {enrolled_student_token}",
+                         "Content-Type": "application/json",
+                         "Prefer": "return=representation"},
+                params={"id": f"eq.{ticket['id']}"},
+                json={"sprint_number": sprint, "status": status},
+                timeout=15,
+            )
+
+        try:
+            resp = patch(1, "todo")
+            assert resp.status_code == 200, f"Pull failed: {resp.text}"
+            assert resp.json()[0]["sprint_number"] == 1
+
+            board = rest("sprint_tickets", enrolled_student_token,
+                         select="id", sprint_number="eq.1",
+                         id=f"eq.{ticket['id']}").json()
+            assert len(board) == 1, "Pulled ticket missing from current sprint board query"
+        finally:
+            patch(original_sprint, ticket["status"])

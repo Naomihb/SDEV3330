@@ -8,6 +8,7 @@ const NAV = [
   { href: '/student/learn',       icon: '◎', label: 'Learn'           },
   { href: '/student/team',        icon: '⚇', label: 'My team'         },
   { href: '/student/sprint-board',icon: '☰', label: 'Sprint board'    },
+  { href: '/student/backlog',     icon: '≣', label: 'Backlog'         },
   { href: '/student/submissions', icon: '⊡', label: 'Submissions'     },
 ]
 

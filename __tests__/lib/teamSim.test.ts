@@ -2,7 +2,7 @@ import { generateTeamAssignment } from '@/utils/teamAssignment'
 import {
   memberMood, memberStatusLine, weeklyTeamState,
   ticketTargetsForWeek, ticketUpdatesToApply,
-  sprintForWeek, sprintWeekRange, STATUS_RANK,
+  sprintForWeek, sprintWeekRange, STATUS_RANK, boardQuestion,
   type SimTicket,
 } from '@/lib/sim/teamSim'
 
@@ -141,5 +141,47 @@ describe('ticket simulation', () => {
     })
     const second = ticketUpdatesToApply(applied, ticketTargetsForWeek(applied, team, 4, STUDENT))
     expect(second).toHaveLength(0)
+  })
+})
+
+describe('board question', () => {
+  const assignees = team.map(m => m.firstName)
+  const base = makeTickets(8, assignees).map(t => ({ ...t, story_points: 2 }))
+
+  it('returns null for an empty board', () => {
+    expect(boardQuestion({ tickets: [], weekNumber: 4 })).toBeNull()
+  })
+
+  it('is deterministic', () => {
+    expect(boardQuestion({ tickets: base, weekNumber: 4 }))
+      .toBe(boardQuestion({ tickets: base, weekNumber: 4 }))
+  })
+
+  it('asks the behind-schedule question in a failing final week', () => {
+    const behind = base.map(t => ({ ...t, status: 'todo' }))
+    const q = boardQuestion({ tickets: behind, weekNumber: 5 })!
+    expect(q).toMatch(/descope|renegotiate|push/)
+    expect(q).toContain('0/8')
+  })
+
+  it('asks the blocker question when 2+ tickets are blocked', () => {
+    const blocked = base.map((t, i) => ({ ...t, status: 'done', is_blocked: false }))
+    blocked[0] = { ...blocked[0], status: 'in_progress', is_blocked: true }
+    blocked[1] = { ...blocked[1], status: 'todo', is_blocked: true }
+    const q = boardQuestion({ tickets: blocked, weekNumber: 4 })!
+    expect(q).toMatch(/blocked/i)
+    expect(q).toContain('2 blocked')
+  })
+
+  it('asks the backlog-pull question when the team is ahead', () => {
+    const ahead = base.map((t, i) => ({ ...t, status: i < 7 ? 'done' : 'todo' }))
+    const q = boardQuestion({ tickets: ahead, weekNumber: 4 })!
+    expect(q).toMatch(/backlog/i)
+  })
+
+  it('reflects real ticket counts in the question text', () => {
+    const mixed = base.map((t, i) => ({ ...t, status: i < 3 ? 'done' : 'todo' }))
+    const q = boardQuestion({ tickets: mixed, weekNumber: 5 })!
+    expect(q).toContain('3/8')
   })
 })

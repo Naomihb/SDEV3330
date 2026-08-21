@@ -196,3 +196,42 @@ export function ticketUpdatesToApply(
   }
   return updates
 }
+
+// ── Scripted board question ──────────────────────────────────────────────────
+// Deterministic Scrum Master question computed from the student's real board.
+// Rule cascade keyed to sprint phase and board health; numbers come from the
+// actual tickets so the question always matches what the student sees.
+
+export interface BoardQuestionInput {
+  tickets: (SimTicket & { story_points?: number })[]
+  weekNumber: number
+}
+
+export function boardQuestion({ tickets, weekNumber }: BoardQuestionInput): string | null {
+  if (tickets.length === 0) return null
+
+  const sprint = sprintForWeek(weekNumber)
+  const [sprintStart] = sprintWeekRange(sprint)
+  const weekInSprint = weekNumber <= sprintStart ? 1 : 2
+
+  const total = tickets.length
+  const done = tickets.filter(t => t.status === 'done').length
+  const blocked = tickets.filter(t => t.is_blocked && t.status !== 'done').length
+  const pointsTotal = tickets.reduce((s, t) => s + (t.story_points ?? 1), 0)
+  const pointsDone = tickets.filter(t => t.status === 'done').reduce((s, t) => s + (t.story_points ?? 1), 0)
+  const doneFrac = done / total
+
+  if (weekInSprint === 2 && doneFrac < 0.5) {
+    return `Sprint ${sprint} ends this week and the board shows ${done}/${total} tickets done (${pointsDone}/${pointsTotal} story points). As Scrum Master, do you descope, renegotiate the sprint goal, or push the team? Justify your call using velocity — and say what you'll tell the stakeholders.`
+  }
+  if (blocked >= 2) {
+    return `There are ${blocked} blocked tickets on the Sprint ${sprint} board right now. Blockers are the Scrum Master's first responsibility: in what order do you attack them, and what exactly do you do to unblock each one?`
+  }
+  if (doneFrac >= 0.75) {
+    return `The team is ahead: ${done}/${total} tickets done in Sprint ${sprint} with ${weekInSprint === 1 ? 'a full week' : 'days'} remaining. Do you pull an item in from the product backlog, or use the slack another way? What are the risks of each choice?`
+  }
+  if (weekInSprint === 1) {
+    return `Sprint ${sprint} just started: ${done}/${total} tickets done, ${pointsTotal} story points committed. Which tickets should the team focus on first, and how will you know mid-sprint whether you're on track for the sprint goal?`
+  }
+  return `Sprint ${sprint} is at ${done}/${total} tickets (${pointsDone}/${pointsTotal} points) heading into its final week. What does the burndown tell you, and what one change would most improve the team's chances of finishing?`
+}

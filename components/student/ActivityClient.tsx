@@ -2,18 +2,24 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { TeamMember } from '@/lib/types'
-import { sprintForWeek, ticketTargetsForWeek, type SimTicket } from '@/lib/sim/teamSim'
+import { sprintForWeek, ticketTargetsForWeek, boardQuestion, type SimTicket } from '@/lib/sim/teamSim'
 
 type ScenarioRow = { id: string; content: string }
 type SubRow = { response_text: string }
 type BlockedItem = { ticket: SimTicket; comment: string }
+type LastFeedback = { weekNumber: number; grade: string; text: string | null }
+
+const GRADE_LABELS: Record<string, string> = { E: 'Excellent', S: 'Satisfactory', U: 'Unsatisfactory', I: 'Incomplete' }
 
 export default function ActivityClient({ week }: { week: any }) {
   const [scenario, setScenario] = useState<string | null>(null)
   const [submission, setSubmission] = useState<any>(null)
   const [response, setResponse] = useState('')
   const [triage, setTriage] = useState('')
+  const [boardAnswer, setBoardAnswer] = useState('')
+  const [question, setQuestion] = useState<string | null>(null)
   const [blocked, setBlocked] = useState<BlockedItem[]>([])
+  const [lastFeedback, setLastFeedback] = useState<LastFeedback | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -27,21 +33,41 @@ export default function ActivityClient({ week }: { week: any }) {
       if (!user || !session) { setError('Not logged in'); setLoading(false); return }
 
       const sprint = sprintForWeek(week.week_number)
-      const [scenarioRes, subRes, ticketsRes, teamRes] = await Promise.all([
+      const [scenarioRes, subRes, ticketsRes, teamRes, pastSubsRes] = await Promise.all([
         supabase.from('scenarios').select('*').eq('student_id', user.id).eq('week_id', week.id).single(),
         supabase.from('submissions').select('*').eq('student_id', user.id).eq('week_id', week.id).single(),
         supabase.from('sprint_tickets').select('*').eq('student_id', user.id).eq('sprint_number', sprint).order('ticket_id'),
         supabase.from('team_assignments').select('team_config').eq('student_id', user.id).single(),
+        supabase.from('submissions')
+          .select('week_id, submitted_at, weeks(week_number), feedback(grade, feedback_text)')
+          .eq('student_id', user.id).neq('week_id', week.id)
+          .order('submitted_at', { ascending: false }),
       ])
       const existingScenario = scenarioRes.data as ScenarioRow | null
       const existingSub = subRes.data as SubRow | null
-      const tickets = (ticketsRes.data ?? []) as SimTicket[]
+      const tickets = (ticketsRes.data ?? []) as (SimTicket & { story_points: number })[]
       const team = ((teamRes.data as { team_config: TeamMember[] } | null)?.team_config ?? [])
 
-      // Surface this week's blocked tickets (same deterministic sim as the board)
+      // Most recent graded submission from a previous week → close the loop
+      const pastSubs = (pastSubsRes.data ?? []) as any[]
+      for (const past of pastSubs) {
+        const fb = Array.isArray(past.feedback) ? past.feedback[0] : past.feedback
+        if (fb?.grade) {
+          const wk = Array.isArray(past.weeks) ? past.weeks[0] : past.weeks
+          setLastFeedback({ weekNumber: wk?.week_number ?? 0, grade: fb.grade, text: fb.feedback_text })
+          break
+        }
+      }
+
+      // Blocked tickets + scripted board question from the real board state
       if (tickets.length > 0 && team.length > 0) {
         const targets = ticketTargetsForWeek(tickets, team, week.week_number, user.id)
         const items: BlockedItem[] = []
+        const effective = tickets.map(t => {
+          const target = targets.find(x => x.id === t.id)
+          if (!target) return t
+          return { ...t, is_blocked: target.isBlocked && t.status !== 'done' ? true : t.is_blocked }
+        })
         for (const target of targets) {
           const t = tickets.find(x => x.id === target.id)
           if (t && target.isBlocked && target.comment && t.status !== 'done') {
@@ -49,6 +75,7 @@ export default function ActivityClient({ week }: { week: any }) {
           }
         }
         setBlocked(items)
+        setQuestion(boardQuestion({ tickets: effective, weekNumber: week.week_number }))
       }
 
       if (existingSub) { setSubmission(existingSub); setResponse(existingSub.response_text) }
@@ -89,9 +116,10 @@ export default function ActivityClient({ week }: { week: any }) {
       .from('scenarios').select('id').eq('week_id', week.id).eq('student_id', session.user.id).single()
     ).data as { id: string } | null
 
-    const combined = blocked.length > 0 && triage.trim()
-      ? `SCENARIO RESPONSE:\n${response.trim()}\n\nBOARD TRIAGE:\n${triage.trim()}`
-      : response.trim()
+    const parts = [`SCENARIO RESPONSE:\n${response.trim()}`]
+    if (blocked.length > 0 && triage.trim()) parts.push(`BOARD TRIAGE:\n${triage.trim()}`)
+    if (question && boardAnswer.trim()) parts.push(`BOARD CHECK:\n${question}\n\nANSWER:\n${boardAnswer.trim()}`)
+    const combined = parts.length > 1 ? parts.join('\n\n') : response.trim()
 
     const res = await fetch('/api/submissions', {
       method: 'POST',
@@ -115,10 +143,27 @@ export default function ActivityClient({ week }: { week: any }) {
     <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-sm text-red-700">{error}</div>
   )
 
-  const canSubmit = response.trim().length >= 50 && (blocked.length === 0 || triage.trim().length >= 30)
+  const canSubmit =
+    response.trim().length >= 50 &&
+    (blocked.length === 0 || triage.trim().length >= 30) &&
+    (!question || boardAnswer.trim().length >= 30)
 
   return (
     <div className="max-w-3xl space-y-4">
+      {lastFeedback && (
+        <div className="bg-white border border-emerald-200 rounded-xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-gray-900">Feedback from your instructor</h2>
+            <span className="text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-2 py-0.5">
+              Week {lastFeedback.weekNumber} · {lastFeedback.grade} — {GRADE_LABELS[lastFeedback.grade] ?? lastFeedback.grade}
+            </span>
+          </div>
+          {lastFeedback.text
+            ? <p className="text-sm text-gray-700 leading-relaxed">{lastFeedback.text}</p>
+            : <p className="text-sm text-gray-400">Graded — no written comments.</p>}
+        </div>
+      )}
+
       <div className="bg-white border border-gray-200 rounded-xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-900">This week&apos;s scenario</h2>
@@ -155,6 +200,7 @@ export default function ActivityClient({ week }: { week: any }) {
             <textarea value={response} onChange={e => setResponse(e.target.value)} rows={7}
               placeholder="As Scrum Master, I would…"
               className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder-gray-300" />
+
             {blocked.length > 0 && (
               <>
                 <p className="text-xs font-medium text-gray-600 mt-4 mb-1">Board triage</p>
@@ -164,9 +210,22 @@ export default function ActivityClient({ week }: { week: any }) {
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder-gray-300" />
               </>
             )}
+
+            {question && (
+              <>
+                <p className="text-xs font-medium text-gray-600 mt-4 mb-1">Board check</p>
+                <p className="text-xs text-gray-500 mb-2 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 leading-relaxed">{question}</p>
+                <textarea value={boardAnswer} onChange={e => setBoardAnswer(e.target.value)} rows={4}
+                  placeholder="Looking at the board, I would…"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none placeholder-gray-300" />
+              </>
+            )}
+
             <div className="flex items-center justify-between mt-3">
               <span className="text-xs text-gray-400">
-                {response.length} chars{blocked.length > 0 ? ` · triage ${triage.length} chars (min 30)` : ''}
+                {response.length} chars
+                {blocked.length > 0 ? ` · triage ${triage.length}/30` : ''}
+                {question ? ` · board ${boardAnswer.length}/30` : ''}
               </span>
               <button onClick={handleSubmit} disabled={submitting || !canSubmit}
                 className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 px-4 py-1.5 rounded-lg transition-colors">
