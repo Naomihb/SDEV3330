@@ -69,6 +69,43 @@ class TestScenarioGeneration:
         assert resp2.status_code == 200
         assert resp1.json()["content"] == resp2.json()["content"]
 
+    @pytest.mark.skipif(
+        not __import__("os").environ.get("ANTHROPIC_API_KEY"),
+        reason="ANTHROPIC_API_KEY not set"
+    )
+    def test_generate_survives_concurrent_requests(self, enrolled_student_token):
+        """First write wins: parallel generate calls must all return the same
+        scenario, and the stored row must match what callers received."""
+        import concurrent.futures
+
+        week = get_active_week(enrolled_student_token)
+        if week is None:
+            pytest.skip("No active submission week")
+
+        def call():
+            return api("POST", "/api/scenarios/generate",
+                       token=enrolled_student_token, json={"weekId": week["id"]})
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+            results = list(pool.map(lambda _: call(), range(3)))
+
+        contents = set()
+        for r in results:
+            assert r.status_code == 200, r.text
+            contents.add(r.json()["content"])
+        assert len(contents) == 1, "Concurrent generates returned different scenarios"
+
+        # The stored scenario must be the one everybody saw
+        stored = httpx.get(
+            f"{SUPABASE_URL}/rest/v1/scenarios",
+            headers={"apikey": SUPABASE_ANON_KEY,
+                     "Authorization": f"Bearer {enrolled_student_token}"},
+            params={"week_id": f"eq.{week['id']}", "select": "content"},
+            timeout=10,
+        ).json()
+        assert len(stored) == 1
+        assert stored[0]["content"] == contents.pop()
+
 
 class TestSubmissions:
 

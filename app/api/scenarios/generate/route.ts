@@ -50,20 +50,25 @@ export async function POST(req: NextRequest) {
       projectDescription: teamAssignment.project_description,
     })
 
-    // Upsert to handle race conditions on concurrent requests
+    // First write wins: concurrent requests must never overwrite a stored
+    // scenario — the student keeps the exact same scenario for the week.
     const service = createServiceClient()
-    const { data: scenarioRaw, error } = await service
+    const { error } = await service
       .from('scenarios')
       .upsert(
         { student_id: user.id, week_id: weekId, content },
-        { onConflict: 'student_id,week_id' }
+        { onConflict: 'student_id,week_id', ignoreDuplicates: true }
       )
-      .select('content')
-      .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    const scenario = scenarioRaw as ScenarioRow | null
-    return NextResponse.json({ content: scenario?.content ?? content })
+
+    // Return whatever is actually stored (ours, or an earlier racer's)
+    const stored = (await service
+      .from('scenarios').select('content')
+      .eq('student_id', user.id).eq('week_id', weekId).single()
+    ).data as ScenarioRow | null
+
+    return NextResponse.json({ content: stored?.content ?? content })
   } catch (e: unknown) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Server error' }, { status: 500 })
   }
