@@ -39,7 +39,8 @@ export default function SprintBoard() {
 
       // Weekly simulation: teammates advance their tickets; blocked items surface.
       // Idempotent and monotonic — never reverts the student's own moves.
-      if (rows.length > 0 && team.length > 0) {
+      // Doesn't run during orientation (week 1): all tickets start in To do.
+      if (rows.length > 0 && team.length > 0 && week >= 2) {
         const targets = ticketTargetsForWeek(rows, team, week, user.id)
         const updates = ticketUpdatesToApply(rows, targets)
         for (const u of updates) {
