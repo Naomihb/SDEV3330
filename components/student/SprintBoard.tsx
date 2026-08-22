@@ -80,6 +80,18 @@ export default function SprintBoard() {
   )
 
   const [wStart, wEnd] = sprintWeekRange(sprintNumber)
+
+  if (tickets.length === 0) return (
+    <div>
+      <h1 className="text-xl font-semibold text-gray-900 mb-1">Sprint {sprintNumber} board</h1>
+      <p className="text-xs text-gray-400 mb-4">Weeks {wStart}–{wEnd} · currently week {weekNumber}</p>
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-700">
+        No tickets in Sprint {sprintNumber} yet. Visit the <a href="/student/backlog" className="underline font-medium">backlog</a> and
+        pull items into this sprint — that&apos;s your job as Scrum Master.
+      </div>
+    </div>
+  )
+
   const cols: { key: 'todo' | 'in_progress' | 'done'; label: string }[] = [
     { key: 'todo', label: 'To do' },
     { key: 'in_progress', label: 'In progress' },
