@@ -67,7 +67,7 @@ export default function TeamLoader() {
                 {s.member.avatarInitials}
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{s.member.name}</p>
+                <p className="font-semibold text-gray-900">{s.member.firstName ?? s.member.name.split(' ')[0]}</p>
                 <p className="text-sm text-gray-500">{ROLE_LABELS[s.member.role] ?? s.member.role}</p>
               </div>
               <div className={`ml-auto w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${MOOD_DOT[s.mood]}`} />

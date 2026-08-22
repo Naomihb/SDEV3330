@@ -121,11 +121,11 @@ export default function SprintBoard() {
                   </div>
                   {t.is_blocked && t.status !== 'done' && comments[t.id] && (
                     <p className="mt-2 text-xs text-red-700 bg-red-50 rounded-lg px-2.5 py-2 italic leading-relaxed">
-                      &ldquo;{comments[t.id]}&rdquo; — {t.assignee_name}
+                      &ldquo;{comments[t.id]}&rdquo; — {t.assignee_name.split(' ')[0]}
                     </p>
                   )}
                   <div className="flex items-center justify-between mt-2.5">
-                    <span className="text-xs text-gray-400">{t.assignee_name} · {t.story_points}pt</span>
+                    <span className="text-xs text-gray-400">{t.assignee_name.split(' ')[0]} · {t.story_points}pt</span>
                     <select value={t.status} onChange={e => move(t.id, e.target.value)}
                       className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white">
                       <option value="todo">To do</option>

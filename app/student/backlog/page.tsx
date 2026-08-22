@@ -111,7 +111,7 @@ export default function BacklogPage() {
                     <div className="min-w-0">
                       <p className="text-xs text-indigo-500 font-mono">{t.ticket_id}</p>
                       <p className="text-sm text-gray-800 truncate">{t.title}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{t.assignee_name} · {t.story_points}pt</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{t.assignee_name.split(' ')[0]} · {t.story_points}pt</p>
                     </div>
                     <button
                       onClick={() => pullIntoSprint(t)}

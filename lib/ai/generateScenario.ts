@@ -118,7 +118,7 @@ export async function generateScenario({
   const jargonNote = JARGON_CONSTRAINTS[week.week_number] ?? ''
 
   const teamDescription = team
-    .map(m => `- ${m.name} (${m.role}, ${m.seniority}): ${m.personalityLabel}`)
+    .map(m => `- ${m.firstName ?? m.name.split(' ')[0]} (${m.role}, ${m.seniority}): ${m.personalityLabel}`)
     .join('\n')
 
   const topicsText = topics.length > 0
@@ -138,7 +138,7 @@ ${topicsText}
 ${jargonNote ? `VOCABULARY CONSTRAINT: ${jargonNote}\n` : ''}
 Write a realistic, brief team interaction scenario (2–4 sentences) that:
 1. Involves a challenge or decision relevant to Week ${week.week_number}: ${week.topic}
-2. Names at least two team members by their full names
+2. Names at least two team members by their first names (first names only, never surnames)
 3. Gives the student a clear decision to make as a team member
 4. Uses only vocabulary the students have already learned
 

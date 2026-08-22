@@ -180,7 +180,7 @@ export default function ActivityClient({ week }: { week: any }) {
             {blocked.map(({ ticket, comment }) => (
               <div key={ticket.id} className="bg-red-50 border border-red-100 rounded-lg p-3">
                 <p className="text-xs font-mono text-red-400 mb-0.5">{ticket.ticket_id} · {ticket.title}</p>
-                <p className="text-sm text-red-800 italic leading-relaxed">&ldquo;{comment}&rdquo; — {ticket.assignee_name}</p>
+                <p className="text-sm text-red-800 italic leading-relaxed">&ldquo;{comment}&rdquo; — {ticket.assignee_name.split(' ')[0]}</p>
               </div>
             ))}
           </div>

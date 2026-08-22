@@ -96,13 +96,16 @@ describe('generateScenario', () => {
     expect(prompt).toContain('SoundCircle')
   })
 
-  it('includes all four team member names in the prompt', async () => {
+  it('includes all four team member first names in the prompt (no surnames)', async () => {
     await generateScenario({ week: makeWeek(), team: makeTeam(), projectName: 'SoundCircle', projectDescription: 'desc' })
     const prompt = mockCreate.mock.calls[0][0].messages[0].content
-    expect(prompt).toContain('Isla Princess')
-    expect(prompt).toContain('Pippin Squeak')
-    expect(prompt).toContain('Mia Peachy')
-    expect(prompt).toContain('Hoftin Hasselhof')
+    expect(prompt).toContain('Isla')
+    expect(prompt).toContain('Pippin')
+    expect(prompt).toContain('Mia')
+    expect(prompt).toContain('Hoftin')
+    expect(prompt).not.toContain('Princess')
+    expect(prompt).not.toContain('Squeak')
+    expect(prompt).toContain('first names only')
   })
 
   it('includes the week topic in the prompt', async () => {
