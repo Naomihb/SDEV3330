@@ -47,3 +47,23 @@ class TestStudentCannotAccessInstructorRoutes:
             json={"weekId": "00000000-0000-0000-0000-000000000000", "active": True},
         )
         assert resp.status_code == 403
+
+
+class TestInstructorClaim:
+
+    def test_claim_requires_auth(self, server_ready):
+        import httpx
+        from conftest import BASE_URL
+        resp = httpx.post(f"{BASE_URL}/api/instructor/claim", json={"code": "x"}, timeout=15)
+        assert resp.status_code == 401
+
+    def test_wrong_code_rejected(self, student_token):
+        resp = api("POST", "/api/instructor/claim", token=student_token,
+                   json={"code": "definitely-not-the-code"})
+        # 403 = wrong code; 500 = INSTRUCTOR_JOIN_CODE not configured in this env
+        assert resp.status_code in (403, 500)
+        assert resp.json().get("error")
+
+    def test_missing_code_rejected(self, student_token):
+        resp = api("POST", "/api/instructor/claim", token=student_token, json={})
+        assert resp.status_code in (403, 500)
