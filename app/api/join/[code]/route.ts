@@ -46,9 +46,9 @@ export async function POST(req: NextRequest, { params }: { params: { code: strin
 
     const tickets = [
       // Sprint 1 — SDLC Foundations (weeks 2-3)
-      { sprint: 1, title: 'Set up project repository and README',              assignee: a, points: 1, status: 'done' },
-      { sprint: 1, title: 'Define SDLC phases for the project',                assignee: b, points: 2, status: 'done' },
-      { sprint: 1, title: 'Write initial requirements document',               assignee: c, points: 3, status: 'in_progress' },
+      { sprint: 1, title: 'Set up project repository and README',              assignee: a, points: 1, status: 'todo' },
+      { sprint: 1, title: 'Define SDLC phases for the project',                assignee: b, points: 2, status: 'todo' },
+      { sprint: 1, title: 'Write initial requirements document',               assignee: c, points: 3, status: 'todo' },
       { sprint: 1, title: 'Create project board and assign roles',             assignee: d, points: 1, status: 'todo' },
       { sprint: 1, title: 'Identify project risks and mitigation strategies',  assignee: b, points: 2, status: 'todo' },
       { sprint: 1, title: 'Draft project timeline and milestones',             assignee: a, points: 3, status: 'todo' },
