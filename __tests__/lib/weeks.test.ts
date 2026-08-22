@@ -3,9 +3,9 @@ import { burndownForWeek, type SimTicket } from '@/lib/sim/teamSim'
 
 function makeWeeks(): WeekRow[] {
   // Mirrors the Fall 2026 schedule
-  const dues = ['2026-08-26','2026-09-02','2026-09-09','2026-09-16','2026-09-23','2026-09-30',
-                '2026-10-07','2026-10-14','2026-10-21','2026-10-28','2026-11-04','2026-11-11',
-                '2026-11-18','2026-12-02','2026-12-09']
+  const dues = ['2026-09-02','2026-09-09','2026-09-16','2026-09-23','2026-09-30','2026-10-07',
+                '2026-10-14','2026-10-21','2026-10-28','2026-11-04','2026-11-11','2026-11-18',
+                '2026-12-02','2026-12-09','2026-12-13']
   return dues.map((due, i) => ({
     id: `w${i + 1}`, week_number: i + 1, topic: `Topic ${i + 1}`,
     description: null, due_date: due, is_active: false,
@@ -20,28 +20,28 @@ describe('resolveCurrentWeek (date-based)', () => {
   })
 
   it('picks week 2 during its window', () => {
-    expect(resolveCurrentWeek(weeks, new Date('2026-08-28T12:00:00Z'))!.week_number).toBe(2)
-    expect(resolveCurrentWeek(weeks, new Date('2026-09-02T12:00:00Z'))!.week_number).toBe(2)
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-04T12:00:00Z'))!.week_number).toBe(2)
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-09T12:00:00Z'))!.week_number).toBe(2)
   })
 
   it('advances to week 3 the day after week 2 is due', () => {
-    expect(resolveCurrentWeek(weeks, new Date('2026-09-03T12:00:00Z'))!.week_number).toBe(3)
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-10T12:00:00Z'))!.week_number).toBe(3)
   })
 
   it('flips at midnight US Central, not midnight UTC', () => {
-    // Wed Sep 2, 10:00pm Central (03:00 UTC Thu) — still week 2
-    expect(resolveCurrentWeek(weeks, new Date('2026-09-03T03:00:00Z'))!.week_number).toBe(2)
-    // Wed Sep 2, 11:59pm Central (04:59 UTC Thu) — still week 2
-    expect(resolveCurrentWeek(weeks, new Date('2026-09-03T04:59:00Z'))!.week_number).toBe(2)
-    // Thu Sep 3, 12:00am Central (05:00 UTC, CDT) — week 3 begins
-    expect(resolveCurrentWeek(weeks, new Date('2026-09-03T05:00:00Z'))!.week_number).toBe(3)
+    // Wed Sep 9, 10:00pm Central (03:00 UTC Thu) — still week 2
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-10T03:00:00Z'))!.week_number).toBe(2)
+    // Wed Sep 9, 11:59pm Central (04:59 UTC Thu) — still week 2
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-10T04:59:00Z'))!.week_number).toBe(2)
+    // Thu Sep 10, 12:00am Central (05:00 UTC, CDT) — week 3 begins
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-10T05:00:00Z'))!.week_number).toBe(3)
   })
 
   it('covers a maternity leave window without any manual toggles', () => {
-    // Weeks 2-7: Aug 27 through Oct 7
+    // Weeks 2-7: Sep 3 through Oct 14
     const checks: [string, number][] = [
-      ['2026-08-30', 2], ['2026-09-05', 3], ['2026-09-12', 4],
-      ['2026-09-20', 5], ['2026-09-28', 6], ['2026-10-05', 7],
+      ['2026-09-05', 2], ['2026-09-12', 3], ['2026-09-20', 4],
+      ['2026-09-28', 5], ['2026-10-05', 6], ['2026-10-12', 7],
     ]
     for (const [date, expected] of checks) {
       expect(resolveCurrentWeek(weeks, new Date(`${date}T12:00:00Z`))!.week_number).toBe(expected)
@@ -71,7 +71,7 @@ describe('resolveSubmissionWeek', () => {
   const weeks = makeWeeks()
 
   it('returns null during orientation week', () => {
-    expect(resolveSubmissionWeek(weeks, new Date('2026-08-24T12:00:00Z'))).toBeNull()
+    expect(resolveSubmissionWeek(weeks, new Date('2026-08-28T12:00:00Z'))).toBeNull()
   })
 
   it('returns the week during submission weeks', () => {
