@@ -21,12 +21,20 @@ export default function ManageWeeksPage() {
     async function load() {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) {
+        setApiError('Your session has expired — please sign in again.')
+        setLoading(false)
+        return
+      }
       const res = await fetch('/api/instructor/weeks', {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
       if (res.ok) setWeeks(await res.json())
-      else setApiError(`Failed to load weeks (${res.status})`)
+      else if (res.status === 401 || res.status === 403) {
+        setApiError('Your session has expired or this account is not an instructor. Please sign in again.')
+      } else {
+        setApiError(`Failed to load weeks (error ${res.status}). Try refreshing the page.`)
+      }
       setLoading(false)
     }
     load()
@@ -63,7 +71,12 @@ export default function ManageWeeksPage() {
       <p className="text-sm text-gray-500">Activate a week to make its activity visible to students. Multiple weeks can be active simultaneously.</p>
 
       {apiError && (
-        <p className="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg">{apiError}</p>
+        <p className="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg">
+          {apiError}
+          {apiError.includes('sign in') && (
+            <> <a href="/login" className="underline font-medium">Go to login</a></>
+          )}
+        </p>
       )}
 
       <div className="space-y-2">

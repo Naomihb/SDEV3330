@@ -29,7 +29,11 @@ export default function InstructorDashboardPage() {
     async function load() {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      if (!session) {
+        setMsg('Your session has expired — please sign in again.')
+        setLoading(false)
+        return
+      }
 
       const res = await fetch('/api/instructor/submissions', {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -42,6 +46,10 @@ export default function InstructorDashboardPage() {
           feedback: Array.isArray(s.feedback) ? s.feedback : s.feedback ? [s.feedback] : [],
         }))
         setSubmissions(normalized as Submission[])
+      } else if (res.status === 401 || res.status === 403) {
+        setMsg('Your session has expired or this account is not an instructor. Please sign in again.')
+      } else {
+        setMsg(`Failed to load submissions (error ${res.status}). Try refreshing the page.`)
       }
       setLoading(false)
     }
@@ -93,6 +101,15 @@ export default function InstructorDashboardPage() {
   if (loading) return (
     <div className="flex items-center justify-center h-40">
       <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  if (submissions.length === 0 && msg) return (
+    <div className="max-w-xl">
+      <p className="text-sm bg-red-50 text-red-600 border border-red-200 px-4 py-3 rounded-xl">
+        {msg}{' '}
+        {msg.includes('sign in') && <a href="/login" className="underline font-medium">Go to login</a>}
+      </p>
     </div>
   )
 
