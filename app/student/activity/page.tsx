@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ActivityClient from '@/components/student/ActivityClient'
-
-const SUBMISSION_WEEKS = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
+import { resolveCurrentWeek, SUBMISSION_WEEKS, type WeekRow } from '@/lib/weeks'
 
 export default function ActivityPage() {
   const [week, setWeek] = useState<any>(null)
@@ -12,11 +11,8 @@ export default function ActivityPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('weeks').select('*').eq('is_active', true)
-        .order('week_number', { ascending: false })
-      const activeWeeks = (data ?? []) as any[]
-      setWeek(activeWeeks.find(w => SUBMISSION_WEEKS.has(w.week_number)) ?? activeWeeks[0] ?? null)
+      const { data } = await supabase.from('weeks').select('*')
+      setWeek(resolveCurrentWeek((data ?? []) as WeekRow[]))
       setLoading(false)
     }
     load()
@@ -31,7 +27,19 @@ export default function ActivityPage() {
   if (!week) return (
     <div className="max-w-3xl">
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-700">
-        No active week set — ask your instructor to activate a week.
+        No course weeks found — ask your instructor.
+      </div>
+    </div>
+  )
+
+  if (!SUBMISSION_WEEKS.has(week.week_number)) return (
+    <div className="max-w-3xl">
+      <div className="inline-block text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-0.5 mb-4">
+        Week {week.week_number} · due {week.due_date}
+      </div>
+      <h1 className="text-xl font-semibold text-gray-900 mb-2">{week.topic}</h1>
+      <div className="bg-white border border-gray-200 rounded-xl p-5 text-sm text-gray-600">
+        {week.description ?? 'No submission activity this week.'} There is no graded submission for this week.
       </div>
     </div>
   )

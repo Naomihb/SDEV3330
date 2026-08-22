@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { TeamMember } from '@/lib/types'
 import { weeklyTeamState, type MemberWeekState } from '@/lib/sim/teamSim'
+import { resolveCurrentWeek, type WeekRow } from '@/lib/weeks'
 
 const ROLE_LABELS: Record<string, string> = {
   senior_dev: 'Senior developer', junior_dev: 'Junior developer',
@@ -33,10 +34,10 @@ export default function TeamLoader() {
 
       const [teamRes, weeksRes] = await Promise.all([
         supabase.from('team_assignments').select('*').eq('student_id', user.id).single(),
-        supabase.from('weeks').select('week_number').eq('is_active', true).order('week_number', { ascending: false }),
+        supabase.from('weeks').select('*'),
       ])
       const assignment = teamRes.data as any
-      const week = ((weeksRes.data ?? []) as { week_number: number }[])[0]?.week_number ?? 2
+      const week = resolveCurrentWeek((weeksRes.data ?? []) as WeekRow[])?.week_number ?? 2
       setTeam(assignment)
       setWeekNumber(week)
       if (assignment?.team_config) {

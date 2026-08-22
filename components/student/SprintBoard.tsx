@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/client'
 import type { TeamMember } from '@/lib/types'
 import {
   sprintForWeek, sprintWeekRange, ticketTargetsForWeek, ticketUpdatesToApply,
-  type SimTicket, type TicketTarget,
+  burndownForWeek, type SimTicket, type TicketTarget,
 } from '@/lib/sim/teamSim'
+import { resolveCurrentWeek, type WeekRow } from '@/lib/weeks'
 
 type Ticket = SimTicket & { story_points: number }
 
@@ -22,10 +23,8 @@ export default function SprintBoard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const activeWeeks = (await supabase
-        .from('weeks').select('week_number').eq('is_active', true).order('week_number', { ascending: false })
-      ).data as { week_number: number }[] | null
-      const week = activeWeeks?.[0]?.week_number ?? 2
+      const allWeeks = (await supabase.from('weeks').select('*')).data as WeekRow[] | null
+      const week = resolveCurrentWeek(allWeeks ?? [])?.week_number ?? 2
       const sprint = sprintForWeek(week)
       setWeekNumber(week)
       setSprintNumber(sprint)
@@ -99,6 +98,14 @@ export default function SprintBoard() {
   ]
   const blockedCount = tickets.filter(t => t.is_blocked && t.status !== 'done').length
 
+  // Burndown: ideal line vs actual remaining points
+  const bd = burndownForWeek(tickets, weekNumber)
+  const W = 260, H = 90, PAD = 24
+  const xs = [PAD, W / 2, W - PAD] // sprint start, end of week 1, end of week 2
+  const y = (pts: number) => bd.totalPoints === 0 ? H - PAD : (H - PAD) - ((H - PAD * 2) * pts / bd.totalPoints)
+  const actualX = bd.weekInSprint === 1 ? xs[1] : xs[2]
+  const onTrack = bd.remainingPoints <= bd.idealRemaining + Math.ceil(bd.totalPoints * 0.15)
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -115,6 +122,34 @@ export default function SprintBoard() {
           <span className="text-xs text-gray-400 bg-gray-100 rounded px-2 py-0.5">{tickets.filter(t => t.status === 'done').length}/{tickets.length} done</span>
         </div>
       </div>
+      <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 flex items-center gap-6">
+        <svg width={W} height={H} className="shrink-0">
+          {/* ideal line: total -> half -> zero */}
+          <polyline
+            points={`${xs[0]},${y(bd.totalPoints)} ${xs[1]},${y(bd.totalPoints / 2)} ${xs[2]},${y(0)}`}
+            fill="none" stroke="#c7d2fe" strokeWidth="2" strokeDasharray="4 3" />
+          {/* actual line from sprint start to now */}
+          <polyline
+            points={`${xs[0]},${y(bd.totalPoints)} ${actualX},${y(bd.remainingPoints)}`}
+            fill="none" stroke={onTrack ? '#34d399' : '#f87171'} strokeWidth="2.5" />
+          <circle cx={actualX} cy={y(bd.remainingPoints)} r="4" fill={onTrack ? '#10b981' : '#ef4444'} />
+          <text x={xs[0]} y={H - 6} fontSize="9" fill="#9ca3af">Wk {wStart} start</text>
+          <text x={xs[1] - 14} y={H - 6} fontSize="9" fill="#9ca3af">Wk {wStart} end</text>
+          <text x={xs[2] - 28} y={H - 6} fontSize="9" fill="#9ca3af">Wk {wEnd} end</text>
+        </svg>
+        <div className="text-sm">
+          <p className="font-semibold text-gray-900 mb-0.5">Burndown</p>
+          <p className="text-gray-500 text-xs leading-relaxed">
+            {bd.remainingPoints} of {bd.totalPoints} points remaining ·
+            ideal by now: {bd.idealRemaining} —{' '}
+            <span className={onTrack ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}>
+              {onTrack ? 'on track' : 'behind the ideal line'}
+            </span>
+          </p>
+          <p className="text-gray-400 text-xs mt-1">Dashed line = ideal pace. Solid line = your team&apos;s actual remaining work.</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-3 gap-4">
         {cols.map(col => (
           <div key={col.key} className="bg-gray-50 rounded-xl p-3">

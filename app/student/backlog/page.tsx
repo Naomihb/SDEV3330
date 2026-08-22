@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { sprintForWeek, sprintWeekRange, type SimTicket } from '@/lib/sim/teamSim'
+import { resolveCurrentWeek, type WeekRow } from '@/lib/weeks'
 
 type Ticket = SimTicket & { story_points: number; sprint_number: number }
 
@@ -18,10 +19,8 @@ export default function BacklogPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const activeWeeks = (await supabase
-        .from('weeks').select('week_number').eq('is_active', true).order('week_number', { ascending: false })
-      ).data as { week_number: number }[] | null
-      const week = activeWeeks?.[0]?.week_number ?? 2
+      const allWeeks = (await supabase.from('weeks').select('*')).data as WeekRow[] | null
+      const week = resolveCurrentWeek(allWeeks ?? [])?.week_number ?? 2
       const sprint = sprintForWeek(week)
       setCurrentSprint(sprint)
 

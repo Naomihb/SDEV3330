@@ -235,3 +235,29 @@ export function boardQuestion({ tickets, weekNumber }: BoardQuestionInput): stri
   }
   return `Sprint ${sprint} is at ${done}/${total} tickets (${pointsDone}/${pointsTotal} points) heading into its final week. What does the burndown tell you, and what one change would most improve the team's chances of finishing?`
 }
+
+// ── Burndown ─────────────────────────────────────────────────────────────────
+
+export interface BurndownData {
+  sprint: number
+  weekInSprint: 1 | 2
+  totalPoints: number
+  remainingPoints: number
+  /** Where a perfectly on-track team would be right now */
+  idealRemaining: number
+}
+
+export function burndownForWeek(
+  tickets: (SimTicket & { story_points?: number })[],
+  weekNumber: number
+): BurndownData {
+  const sprint = sprintForWeek(weekNumber)
+  const [sprintStart] = sprintWeekRange(sprint)
+  const weekInSprint: 1 | 2 = weekNumber <= sprintStart ? 1 : 2
+  const totalPoints = tickets.reduce((s, t) => s + (t.story_points ?? 1), 0)
+  const remainingPoints = tickets
+    .filter(t => t.status !== 'done')
+    .reduce((s, t) => s + (t.story_points ?? 1), 0)
+  const idealRemaining = Math.round(totalPoints * (weekInSprint === 1 ? 0.5 : 0))
+  return { sprint, weekInSprint, totalPoints, remainingPoints, idealRemaining }
+}

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { resolveCurrentWeek, type WeekRow } from '@/lib/weeks'
 
 export default function StudentDashboard() {
   const [data, setData] = useState<{team: any, tickets: any[], week: any, submissionCount: number} | null>(null)
@@ -12,13 +13,13 @@ export default function StudentDashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const [{ data: team }, { data: activeWeeks }, { data: subs }] = await Promise.all([
+      const [{ data: team }, { data: allWeeks }, { data: subs }] = await Promise.all([
         supabase.from('team_assignments').select('*').eq('student_id', user.id).maybeSingle(),
-        supabase.from('weeks').select('*').eq('is_active', true).order('week_number', { ascending: false }),
+        supabase.from('weeks').select('*'),
         supabase.from('submissions').select('id').eq('student_id', user.id),
       ])
 
-      const latestWeek = (activeWeeks as { week_number: number; topic: string; due_date: string; is_active: boolean }[] | null)?.[0] ?? null
+      const latestWeek = resolveCurrentWeek((allWeeks ?? []) as WeekRow[]) as (WeekRow & { description?: string }) | null
       const sprintNum = latestWeek
         ? Math.max(1, Math.min(6, Math.ceil((latestWeek.week_number - 1) / 2)))
         : 1

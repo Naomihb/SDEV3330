@@ -68,7 +68,7 @@ export default function ManageWeeksPage() {
   return (
     <div className="max-w-2xl space-y-4">
       <h1 className="font-semibold text-gray-900">Manage weeks</h1>
-      <p className="text-sm text-gray-500">Activate a week to make its activity visible to students. Multiple weeks can be active simultaneously.</p>
+      <p className="text-sm text-gray-500">Weeks activate automatically by date — no action needed during the semester. Toggling a week here manually overrides the schedule (highest active week wins); deactivate all to return to automatic.</p>
 
       {apiError && (
         <p className="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg">
