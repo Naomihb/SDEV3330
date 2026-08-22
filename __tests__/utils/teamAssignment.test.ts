@@ -106,3 +106,14 @@ describe('generateTeamAssignment', () => {
     })
   })
 })
+
+
+describe('personality distinctness', () => {
+  it('all four team members get different personalities', () => {
+    for (let i = 0; i < 25; i++) {
+      const { team } = generateTeamAssignment(`student-${i}`)
+      const personalities = new Set(team.map(m => m.personality))
+      expect(personalities.size).toBe(4)
+    }
+  })
+})

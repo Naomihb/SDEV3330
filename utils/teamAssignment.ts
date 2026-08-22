@@ -79,9 +79,15 @@ export function generateTeamAssignment(studentId: string): {
     .map(x => x.role)
     .slice(0, 4)
 
+  // Distinct personalities: seeded shuffle, take four — no more clone teams
+  const shuffledPersonalities = [...PERSONALITIES]
+    .map((p, i) => ({ p, sort: seededRandom(studentId, i + 40) }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(x => x.p)
+
   const team: TeamMember[] = PET_NAMES.map((pet, i) => {
     const role = shuffledRoles[i]
-    const personality = pickFrom(PERSONALITIES, studentId, i + 20)
+    const personality = shuffledPersonalities[i]
     const { label, moodTendency } = PERSONALITY_MAP[personality]
     const [avatarBg, avatarText] = AVATAR_COLORS[i]
     const seniority = role === 'senior_dev' ? 'senior' : role === 'junior_dev' ? 'junior' : 'mid'
