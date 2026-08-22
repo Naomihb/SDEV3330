@@ -14,8 +14,13 @@ export interface WeekRow {
 
 export const SUBMISSION_WEEKS = new Set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
 
+// Calendar date in US Central time — weeks flip at midnight Central
+// (11:59pm Wednesday CST/CDT ends the week), not midnight UTC.
 function toISODate(d: Date): string {
-  return d.toISOString().slice(0, 10)
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Chicago',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(d)
 }
 
 /**

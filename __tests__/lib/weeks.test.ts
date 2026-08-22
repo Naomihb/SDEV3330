@@ -28,6 +28,15 @@ describe('resolveCurrentWeek (date-based)', () => {
     expect(resolveCurrentWeek(weeks, new Date('2026-09-03T12:00:00Z'))!.week_number).toBe(3)
   })
 
+  it('flips at midnight US Central, not midnight UTC', () => {
+    // Wed Sep 2, 10:00pm Central (03:00 UTC Thu) — still week 2
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-03T03:00:00Z'))!.week_number).toBe(2)
+    // Wed Sep 2, 11:59pm Central (04:59 UTC Thu) — still week 2
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-03T04:59:00Z'))!.week_number).toBe(2)
+    // Thu Sep 3, 12:00am Central (05:00 UTC, CDT) — week 3 begins
+    expect(resolveCurrentWeek(weeks, new Date('2026-09-03T05:00:00Z'))!.week_number).toBe(3)
+  })
+
   it('covers a maternity leave window without any manual toggles', () => {
     // Weeks 2-7: Aug 27 through Oct 7
     const checks: [string, number][] = [
