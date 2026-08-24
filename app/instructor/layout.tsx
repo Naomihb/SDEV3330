@@ -1,14 +1,19 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import InstructorSidebar from '@/components/instructor/InstructorSidebar'
 
 export default function InstructorLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [ready, setReady] = useState(false)
 
+  // /instructor/claim is how students BECOME instructors — no role guard there
+  const isClaimPage = pathname === '/instructor/claim'
+
   useEffect(() => {
+    if (isClaimPage) { setReady(true); return }
     async function check() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -19,7 +24,9 @@ export default function InstructorLayout({ children }: { children: React.ReactNo
       setReady(true)
     }
     check()
-  }, [router])
+  }, [router, isClaimPage])
+
+  if (isClaimPage) return <>{children}</>
 
   if (!ready) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
